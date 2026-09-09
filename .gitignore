@@ -216,3 +216,24 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Meme Finder local environments, secrets, and temporary downloads
+.venv/
+*.pyc
+.env.*
+secrets.toml
+secrets.json
+credentials.json
+*.pem
+*.key
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
+tmp/
+temp/
+*.exe
+*.msi
+*.msix
+*.zip

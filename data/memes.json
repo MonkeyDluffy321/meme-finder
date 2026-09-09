@@ -1,0 +1,50 @@
+[
+  {
+    "name": "Distracted Boyfriend",
+    "meaning": "Being tempted by something new while ignoring an existing commitment.",
+    "keywords": ["boyfriend", "girlfriend", "distraction", "temptation", "jealousy", "guy looking at another girl"],
+    "description": "A guy turns to look at another girl walking past while his girlfriend looks at him in disbelief."
+  },
+  {
+    "name": "This Is Fine",
+    "meaning": "Pretending everything is okay while a situation falls apart.",
+    "keywords": ["dog", "fire", "fine", "denial", "chaos", "burning room"],
+    "description": "A cartoon dog sits calmly with a drink in a room surrounded by flames."
+  },
+  {
+    "name": "Drake Hotline Bling",
+    "meaning": "Rejecting one option and enthusiastically approving another.",
+    "keywords": ["Drake", "choice", "reject", "approve", "preference", "yes", "no"],
+    "description": "Two panels show Drake turning away from one option and smiling while pointing at the other."
+  },
+  {
+    "name": "Two Buttons",
+    "meaning": "Struggling to choose between two difficult or contradictory options.",
+    "keywords": ["buttons", "decision", "sweating", "dilemma", "choice"],
+    "description": "A cartoon man sweats as he tries to decide which of two red buttons to press."
+  },
+  {
+    "name": "Woman Yelling at a Cat",
+    "meaning": "An angry accusation paired with a confused or unimpressed response.",
+    "keywords": ["woman", "yelling", "cat", "argument", "confused", "dinner"],
+    "description": "A woman points and shouts beside an image of a white cat sitting at a dinner table."
+  },
+  {
+    "name": "Expanding Brain",
+    "meaning": "A progression of ideas presented as increasingly enlightened, often sarcastically.",
+    "keywords": ["brain", "galaxy", "smart", "ideas", "enlightenment"],
+    "description": "A series of brains becomes larger and more brightly glowing with each successive panel."
+  },
+  {
+    "name": "Surprised Pikachu",
+    "meaning": "Acting shocked by an obvious or predictable consequence.",
+    "keywords": ["Pikachu", "surprised", "shock", "consequence", "unexpected"],
+    "description": "Pikachu stares ahead with wide eyes and an open mouth in surprise."
+  },
+  {
+    "name": "Success Kid",
+    "meaning": "Celebrating a small victory or a moment of good luck.",
+    "keywords": ["kid", "baby", "fist", "success", "winning", "victory"],
+    "description": "A small child on a beach clenches a fist with a determined expression."
+  }
+]
