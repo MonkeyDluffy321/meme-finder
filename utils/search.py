@@ -6,11 +6,13 @@ from math import log
 
 from rapidfuzz.fuzz import ratio
 
+from utils.semantic import semantic_fallback
+
 
 # Ignore common words so descriptions focus on their useful terms.
 STOP_WORDS = {"a", "an", "the", "is", "at", "in", "on", "of", "to", "and", "with"}
 CONTEXT_WORDS = {"by", "another", "during", "while"}
-PERSON_WORDS = {"man", "guy", "person", "woman"}
+STRUCTURED_FIELDS = {"name", "aliases", "keywords", "situations", "emotions", "categories"}
 FIELD_WEIGHTS = {
     "name": 8, "aliases": 7, "keywords": 6, "situations": 6,
     "meaning": 3, "emotions": 3, "categories": 3, "description": 1,
@@ -75,7 +77,7 @@ def search_memes(memes, query):
     """Admit useful evidence, then rank complete names, exact context, and typos.
 
     IDF counts each record once. Equal ranks retain input order and results
-    remain the original objects. No model, persistent cache, or mutation.
+    remain the original objects. Semantic fallback runs only if none qualify.
     """
     memes = list(memes)
     if not query.strip():
@@ -92,10 +94,8 @@ def search_memes(memes, query):
                           for word in set().union(*(item[2] for item in record_items)))
     idf = {word: log(1 + (len(memes) - count + 0.5) / (count + 0.5))
            for word, count in frequencies.items()}
-    informative = query_words - PERSON_WORDS
-    # Generic people alone need a complete name/alias, not an incidental mention.
-    generic_only = not informative
-    evidence_words = informative or query_words
+    evidence_words = query_words
+    short_query = len(query_words) <= 2
     name_scores = [max((name_similarity(phrase_words, words)
                        for field, words, _ in record_items if field in {"name", "aliases"}),
                       default=0) for record_items in items]
@@ -108,6 +108,7 @@ def search_memes(memes, query):
         phrase_bonus = 0
         complete_name = False
         coherent_count = 0
+        short_support = set()
         for field, words, field_words in record_items:
             weight = FIELD_WEIGHTS[field]
             complete_name |= field in {"name", "aliases"} and words == phrase_words
@@ -131,13 +132,32 @@ def search_memes(memes, query):
                     similarity = token_score = 0
                 best_scores[word] = max(best_scores[word], token_score)
                 similarities[word] = max(similarities[word], similarity)
+                # Short queries need explicit metadata evidence. A complete
+                # prose item also qualifies; a prose fragment only qualifies
+                # in meaning when it is selective (at most 10% of records).
+                explicit = field in STRUCTURED_FIELDS or field_words == evidence_words
+                selective_meaning = (field == "meaning" and word in field_words
+                                     and frequencies[word] <= max(1, len(memes) * 0.1))
+                # When the corpus knows this exact term, do not add unrelated
+                # fuzzy neighbours (e.g. money -> monkey). Unknown typos can
+                # still use the existing conservative fuzzy thresholds.
+                supported_match = similarity == 100 or (
+                    similarity >= SOLO_FUZZY_CUTOFF and (
+                        word not in frequencies or (
+                            field in {"name", "aliases"} and len(words) == 1)))
+                if supported_match and (explicit or selective_meaning):
+                    short_support.add(word)
 
         matched = [value for value in similarities.values() if value]
         coverage = len(matched) / len(evidence_words)
         recovered_name = name_scores[index] >= 82 and name_scores[index] - runner_up >= 5
         admitted_tokens = coverage >= MIN_COVERAGE and not (
             len(matched) == 1 and matched[0] < SOLO_FUZZY_CUTOFF)
-        if not complete_name and (generic_only or not (admitted_tokens or recovered_name)):
+        if short_query:
+            # Two-token searches can use an incidental second clue, but need
+            # at least one explicit anchor and the existing overall coverage.
+            admitted_tokens &= bool(short_support)
+        if not complete_name and not (admitted_tokens or recovered_name):
             continue
         exact_coverage = sum(value == 100 for value in similarities.values()) / len(evidence_words)
         coherent = coherent_count / len(evidence_words)
@@ -150,4 +170,6 @@ def search_memes(memes, query):
         ranked.append((tier, score, meme))
 
     ranked.sort(key=lambda item: item[:2], reverse=True)
-    return [meme for tier, score, meme in ranked]
+    if ranked:
+        return [meme for tier, score, meme in ranked]
+    return semantic_fallback(memes, query)

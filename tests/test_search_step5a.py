@@ -76,10 +76,10 @@ class Step5ASearchRegressionTests(unittest.TestCase):
         self.assertTrue(names)
         self.assertEqual(names[0], "Two Buttons")
 
-    def test_generic_man_query_is_rejected(self):
+    def test_man_requires_explicit_metadata(self):
         names = self.names_for("man")
 
-        self.assertEqual(names, [])
+        self.assertEqual(set(names), {"Distracted Boyfriend", "Stonks", "Hide the Pain Harold"})
 
     def test_random_nonsense_is_rejected(self):
         names = self.names_for("zxqv jklz")
