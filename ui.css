@@ -1,0 +1,47 @@
+.mf-hero {text-align: center; padding: .25rem 0 1rem; max-width: 850px; margin: auto;}
+.mf-hero .eyebrow {font-size: .72rem; letter-spacing: 0; color: #9CAEF3; margin-bottom: .65rem;}
+.mf-hero h1 {font-size: 3rem; line-height: 1.12; font-weight: 750; letter-spacing: 0; overflow-wrap: anywhere; margin: 0; padding: 0;}
+.mf-hero h1 span {color: #A5A1FF; background: linear-gradient(100deg, #75AAFF, #B69BFF); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;}
+.mf-hero p {color: #A6B0C7; line-height: 1.55; max-width: 620px; margin: .7rem auto 0;}
+.st-key-brand h3 {font-size: 1.2rem;}
+.st-key-navigation {gap: .35rem;}
+.st-key-navigation button {border-radius: 8px; text-align: left; justify-content: flex-start; border: 1px solid transparent; background: transparent; box-shadow: none; padding: .55rem .8rem;}
+.st-key-navigation button[kind="primary"] {background: #1B3158; border-color: #2C4674; color: #CADBFF;}
+.st-key-navigation button[kind="primary"]:hover {background: #223D68; border-color: #5277B6;}
+.st-key-navigation button:disabled {background: transparent; border-color: transparent; color: #8994AB; opacity: .6; cursor: not-allowed;}
+.st-key-product_info {margin-top: 3rem;}
+.st-key-search_box {padding: .65rem .75rem; border: 1px solid #526AB1; border-radius: 14px; background: #10192C; box-shadow: 0 0 22px #5368DD10; min-width: 0; max-width: 100%; box-sizing: border-box;}
+.st-key-search_box:focus-within {border-color: #8396ED; box-shadow: 0 0 0 2px #6287FF18;}
+.st-key-search_box input {font-size: 1rem; min-height: 2.9rem;}
+.st-key-search_box button[kind="primary"] {min-height: 2.9rem; background: linear-gradient(110deg, #477AF5, #7261D7); border: 0; border-radius: 9px; padding: .5rem .8rem;}
+.st-key-quick_filters {margin-top: .2rem; gap: .5rem;}
+.st-key-clear_search button {border-color: transparent; background: transparent; color: #A7B5D1; padding: .25rem .5rem; min-height: 2rem;}
+.st-key-clear_search button:disabled {opacity: .45;}
+/* Native pill controls retain their focus, keyboard, and selection semantics. */
+.st-key-quick_category button, .st-key-quick_emotion button {border-radius: 18px; border: 1px solid #2C3A56; background: #121D32; color: #B8C5DD; padding: .3rem .7rem; min-height: 2rem; max-width: 100%;}
+.st-key-quick_category button:hover, .st-key-quick_emotion button:hover {border-color: #5C77B8; background: #1A2945;}
+.st-key-quick_category button[aria-pressed="true"], .st-key-quick_emotion button[aria-pressed="true"],
+.st-key-quick_category button[kind="pillsActive"], .st-key-quick_emotion button[kind="pillsActive"] {background: #244782; border-color: #668FF0; color: #F1F5FF; box-shadow: 0 2px 8px #3468D51A;}
+.st-key-quick_emotion {max-width: 100%; min-width: 0;}
+.st-key-quick_emotion button {border-radius: 10px; padding: .5rem .85rem;}
+.st-key-results {min-width: 0; max-width: 100%; overflow-wrap: anywhere;}
+.st-key-results [class*="st-key-card-"] {background: #121C30; border: 1px solid #293752; border-radius: 12px; padding: .85rem; gap: .75rem; min-width: 0; max-width: 100%; box-sizing: border-box; box-shadow: 0 4px 16px #00000018; transition: border-color .18s, box-shadow .18s;}
+.st-key-results [class*="st-key-card-"]:hover {border-color: #526899; box-shadow: 0 8px 24px #00000030;}
+.st-key-results [data-testid="stImage"] {width: 100%; max-width: 100%; min-width: 0;}
+.st-key-results img {height: 200px; width: 100%; max-width: 100%; object-fit: contain; border-radius: 8px;}
+.st-key-results h3 {font-size: 1.15rem; line-height: 1.4; min-height: 3.2rem; letter-spacing: 0;}
+.st-key-results [class*="st-key-preview-"] {min-height: 210px; max-width: 100%; background: #0C1424; border-radius: 8px;}
+.st-key-results [class*="st-key-meaning-"] {min-height: 4.5rem; color: #BAC4D8; line-height: 1.55;}
+.st-key-results details {border-color: #293752; border-radius: 8px; background: transparent;}
+.mf-tags {display: flex; flex-wrap: wrap; gap: .35rem; margin: .15rem 0 .4rem;}
+.mf-tag {font-size: .72rem; border: 1px solid #354562; background: #1C2943; color: #B8CBFF; padding: .15rem .5rem; border-radius: 20px; max-width: 100%; box-sizing: border-box; overflow-wrap: anywhere;}
+.mf-tag.emotion {color: #C9B8F3; border-color: #493D66; background: #29213F;}
+@media (max-width: 640px) {
+  .mf-hero {padding-top: 0;}
+  .mf-hero h1 {font-size: 2.1rem;}
+  .st-key-search_box {padding: .6rem;}
+  .st-key-results h3, .st-key-results [class*="st-key-meaning-"] {min-height: 0;}
+}
+@media (prefers-reduced-motion: reduce) {
+  .st-key-results [class*="st-key-card-"] {transition: none;}
+}
