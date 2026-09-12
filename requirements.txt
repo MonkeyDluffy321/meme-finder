@@ -1,1 +1,3 @@
 streamlit>=1.40,<2
+rapidfuzz>=3.0,<4
+fastembed==0.8.0
