@@ -1,11 +1,13 @@
-"""Meme Finder: a small, completely local Streamlit app."""
+"""Meme Finder: local text search with remote template previews."""
 
 import json
+from io import BytesIO
 from pathlib import Path
 
 import streamlit as st
 
 from utils.search import search_memes
+from utils.images import load_preview
 
 
 DATA_PATH = Path(__file__).parent / "data" / "memes.json"
@@ -51,9 +53,29 @@ if not results:
 
 for meme in results:
     with st.container(border=True):
-        st.subheader(meme["name"])
-        st.write(f"**Meaning:** {meme['meaning']}")
-        st.write(f"**Keywords:** {', '.join(meme['keywords'])}")
-        st.write(f"**Description:** {meme['description']}")
+        preview_column, details_column = st.columns([2, 3], gap="medium")
+        with details_column:
+            st.subheader(meme["name"])
+            st.write(meme["meaning"])
+            if meme.get("aliases"):
+                st.caption("Also known as: " + ", ".join(meme["aliases"]))
+            if meme.get("categories"):
+                st.write("**Categories:** " + ", ".join(meme["categories"]))
+            if meme.get("situations"):
+                st.markdown("**Common situations**")
+                st.markdown("\n".join("- " + situation for situation in meme["situations"]))
+            st.caption("Keywords: " + ", ".join(meme["keywords"]))
+            with st.expander("Scene description"):
+                st.write(meme["description"])
+        with preview_column:
+            preview = load_preview(meme.get("image_url"))
+            if preview is None:
+                st.caption("Preview unavailable")
+            else:
+                try:
+                    st.image(BytesIO(preview), caption=meme["name"], width=240)
+                except Exception:
+                    # A corrupt or unsupported image must not hide the result text.
+                    st.caption("Preview unavailable")
 
-st.caption("This first version searches text in a small sample dataset; it does not identify images.")
+st.caption("Template previews hosted by Imgflip.")

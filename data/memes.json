@@ -1,6 +1,7 @@
 [
   {
     "id": "distracted-boyfriend",
+    "image_url": "https://i.imgflip.com/1ur9b0.jpg",
     "name": "Distracted Boyfriend",
     "meaning": "Being tempted by something new while ignoring an existing commitment.",
     "keywords": [
@@ -31,6 +32,7 @@
   },
   {
     "id": "this-is-fine",
+    "image_url": "https://i.imgflip.com/wxica.jpg",
     "name": "This Is Fine",
     "meaning": "Pretending everything is okay while a situation falls apart.",
     "keywords": [
@@ -60,6 +62,7 @@
   },
   {
     "id": "drake-hotline-bling",
+    "image_url": "https://i.imgflip.com/30b1gx.jpg",
     "name": "Drake Hotline Bling",
     "meaning": "Rejecting one option and enthusiastically approving another.",
     "keywords": [
@@ -91,6 +94,7 @@
   },
   {
     "id": "two-buttons",
+    "image_url": "https://i.imgflip.com/1g8my4.jpg",
     "name": "Two Buttons",
     "meaning": "Struggling to choose between two difficult or contradictory options.",
     "keywords": [
@@ -120,6 +124,7 @@
   },
   {
     "id": "woman-yelling-at-a-cat",
+    "image_url": "https://i.imgflip.com/345v97.jpg",
     "name": "Woman Yelling at a Cat",
     "meaning": "An angry accusation paired with a confused or unimpressed response.",
     "keywords": [
@@ -150,6 +155,7 @@
   },
   {
     "id": "expanding-brain",
+    "image_url": "https://i.imgflip.com/1jwhww.jpg",
     "name": "Expanding Brain",
     "meaning": "A progression of ideas presented as increasingly enlightened, often sarcastically.",
     "keywords": [
@@ -179,6 +185,7 @@
   },
   {
     "id": "surprised-pikachu",
+    "image_url": "https://i.imgflip.com/2kbn1e.jpg",
     "name": "Surprised Pikachu",
     "meaning": "Acting shocked by an obvious or predictable consequence.",
     "keywords": [
@@ -208,6 +215,7 @@
   },
   {
     "id": "success-kid",
+    "image_url": "https://imgflip.com/s/meme/Success-Kid.jpg",
     "name": "Success Kid",
     "meaning": "Celebrating a small victory or a moment of good luck.",
     "keywords": [
@@ -237,6 +245,7 @@
   },
   {
     "id": "uno-draw-25",
+    "image_url": "https://i.imgflip.com/3lmzyx.jpg",
     "name": "UNO Draw 25",
     "meaning": "Choosing an excessive penalty rather than doing something unwanted.",
     "keywords": [
@@ -266,6 +275,7 @@
   },
   {
     "id": "change-my-mind",
+    "image_url": "https://i.imgflip.com/24y43o.jpg",
     "name": "Change My Mind",
     "meaning": "Presenting a firmly held opinion as a challenge to others.",
     "keywords": [
@@ -294,6 +304,7 @@
   },
   {
     "id": "disaster-girl",
+    "image_url": "https://i.imgflip.com/23ls.jpg",
     "name": "Disaster Girl",
     "meaning": "Looking suspiciously pleased while chaos unfolds.",
     "keywords": [
@@ -321,6 +332,7 @@
   },
   {
     "id": "hide-the-pain-harold",
+    "image_url": "https://i.imgflip.com/gk5el.jpg",
     "name": "Hide the Pain Harold",
     "meaning": "Masking discomfort or sadness with an unconvincing smile.",
     "keywords": [
@@ -350,6 +362,7 @@
   },
   {
     "id": "grus-plan",
+    "image_url": "https://i.imgflip.com/26jxvz.jpg",
     "name": "Gru's Plan",
     "meaning": "Realizing that a carefully explained plan contains an unwanted consequence.",
     "keywords": [
@@ -379,6 +392,7 @@
   },
   {
     "id": "is-this-a-pigeon",
+    "image_url": "https://i.imgflip.com/1o00in.jpg",
     "name": "Is This a Pigeon?",
     "meaning": "Confidently mistaking something for a completely different thing.",
     "keywords": [
@@ -406,6 +420,7 @@
   },
   {
     "id": "mocking-spongebob",
+    "image_url": "https://i.imgflip.com/1otk96.jpg",
     "name": "Mocking SpongeBob",
     "meaning": "Repeating another person's words in a sarcastic or mocking tone.",
     "keywords": [
@@ -434,6 +449,7 @@
   },
   {
     "id": "boardroom-meeting-suggestion",
+    "image_url": "https://i.imgflip.com/m78d.jpg",
     "name": "Boardroom Meeting Suggestion",
     "meaning": "Punishing the person who suggests a sensible answer in a dysfunctional group.",
     "keywords": [
@@ -463,6 +479,7 @@
   },
   {
     "id": "running-away-balloon",
+    "image_url": "https://i.imgflip.com/261o3j.jpg",
     "name": "Running Away Balloon",
     "meaning": "Being held back from something desirable by an obligation or obstacle.",
     "keywords": [
@@ -490,6 +507,7 @@
   },
   {
     "id": "left-exit-12-off-ramp",
+    "image_url": "https://i.imgflip.com/22bdq6.jpg",
     "name": "Left Exit 12 Off Ramp",
     "meaning": "Suddenly abandoning a sensible path for a tempting alternative.",
     "keywords": [
@@ -519,6 +537,7 @@
   },
   {
     "id": "one-does-not-simply",
+    "image_url": "https://i.imgflip.com/1bij.jpg",
     "name": "One Does Not Simply",
     "meaning": "Pointing out that an apparently simple task is actually difficult.",
     "keywords": [
@@ -546,6 +565,7 @@
   },
   {
     "id": "ancient-aliens",
+    "image_url": "https://i.imgflip.com/26am.jpg",
     "name": "Ancient Aliens",
     "meaning": "Offering an absurdly convenient explanation without convincing evidence.",
     "keywords": [
@@ -574,6 +594,7 @@
   },
   {
     "id": "waiting-skeleton",
+    "image_url": "https://i.imgflip.com/2fm6x.jpg",
     "name": "Waiting Skeleton",
     "meaning": "Waiting so long that the wait feels endless.",
     "keywords": [
@@ -602,6 +623,7 @@
   },
   {
     "id": "bad-luck-brian",
+    "image_url": "https://i.imgflip.com/1bip.jpg",
     "name": "Bad Luck Brian",
     "meaning": "Experiencing an absurdly unlucky outcome even when trying to succeed.",
     "keywords": [
@@ -629,6 +651,7 @@
   },
   {
     "id": "first-world-problems",
+    "image_url": "https://imgflip.com/s/meme/First-World-Problems.jpg",
     "name": "First World Problems",
     "meaning": "Dramatizing a minor inconvenience from a position of comfort.",
     "keywords": [
@@ -657,6 +680,7 @@
   },
   {
     "id": "roll-safe",
+    "image_url": "https://i.imgflip.com/1h7in3.jpg",
     "name": "Roll Safe",
     "meaning": "Presenting flawed logic as if it were a clever solution.",
     "keywords": [
@@ -685,6 +709,7 @@
   },
   {
     "id": "confused-nick-young",
+    "image_url": "https://i.imgflip.com/1jmzdm.jpg",
     "name": "Confused Nick Young",
     "meaning": "Reacting with disbelief to something that makes little sense.",
     "keywords": [
@@ -713,6 +738,7 @@
   },
   {
     "id": "leonardo-dicaprio-laughing",
+    "image_url": "https://i.imgflip.com/4acd7j.png",
     "name": "Leonardo DiCaprio Laughing",
     "meaning": "Reacting with smug amusement or delight at an ironic situation.",
     "keywords": [
@@ -743,6 +769,7 @@
   },
   {
     "id": "always-has-been",
+    "image_url": "https://i.imgflip.com/46e43q.png",
     "name": "Always Has Been",
     "meaning": "Discovering a hidden truth that another person already knew.",
     "keywords": [
@@ -771,6 +798,7 @@
   },
   {
     "id": "trade-offer",
+    "image_url": "https://i.imgflip.com/54hjww.jpg",
     "name": "Trade Offer",
     "meaning": "Framing an exchange as a deal, often with obviously unequal benefits.",
     "keywords": [
@@ -799,6 +827,7 @@
   },
   {
     "id": "bernie-once-again-asking",
+    "image_url": "https://i.imgflip.com/3oevdk.jpg",
     "name": "Bernie I Am Once Again Asking",
     "meaning": "Repeating a request for help, support, or a long-overdue action.",
     "keywords": [
@@ -828,6 +857,7 @@
   },
   {
     "id": "batman-slapping-robin",
+    "image_url": "https://i.imgflip.com/9ehk.jpg",
     "name": "Batman Slapping Robin",
     "meaning": "Abruptly interrupting or correcting another person's statement.",
     "keywords": [
@@ -857,6 +887,7 @@
   },
   {
     "id": "monkey-puppet",
+    "image_url": "https://i.imgflip.com/2gnnjh.jpg",
     "name": "Monkey Puppet",
     "meaning": "Looking away awkwardly to avoid admitting involvement or embarrassment.",
     "keywords": [
@@ -885,6 +916,7 @@
   },
   {
     "id": "same-picture",
+    "image_url": "https://i.imgflip.com/2za3u1.jpg",
     "name": "They're The Same Picture",
     "meaning": "Claiming that two supposedly different things are effectively identical.",
     "keywords": [
@@ -914,6 +946,7 @@
   },
   {
     "id": "bike-fall",
+    "image_url": "https://i.imgflip.com/1b42wl.jpg",
     "name": "Bike Fall",
     "meaning": "Causing one's own problem and blaming someone else.",
     "keywords": [
@@ -943,6 +976,7 @@
   },
   {
     "id": "clown-applying-makeup",
+    "image_url": "https://i.imgflip.com/38el31.jpg",
     "name": "Clown Applying Makeup",
     "meaning": "Showing a progression of increasingly foolish beliefs or decisions.",
     "keywords": [
@@ -971,6 +1005,7 @@
   },
   {
     "id": "panik-kalm-panik",
+    "image_url": "https://i.imgflip.com/3qqcim.png",
     "name": "Panik Kalm Panik",
     "meaning": "Moving from panic to brief reassurance and back to panic.",
     "keywords": [
@@ -1001,6 +1036,7 @@
   },
   {
     "id": "epic-handshake",
+    "image_url": "https://i.imgflip.com/28j0te.jpg",
     "name": "Epic Handshake",
     "meaning": "Finding common ground between otherwise different groups.",
     "keywords": [
@@ -1029,6 +1065,7 @@
   },
   {
     "id": "distracted-anakin-padme",
+    "image_url": "https://i.imgflip.com/5c7lwq.png",
     "name": "Anakin Padme",
     "meaning": "An optimistic assumption gives way to concern when reassurance never comes.",
     "keywords": [
@@ -1058,6 +1095,7 @@
   },
   {
     "id": "evil-kermit",
+    "image_url": "https://i.imgflip.com/1e7ql7.jpg",
     "name": "Evil Kermit",
     "meaning": "An internal debate between sensible behavior and a tempting bad impulse.",
     "keywords": [
@@ -1086,6 +1124,7 @@
   },
   {
     "id": "futurama-fry",
+    "image_url": "https://i.imgflip.com/1bgw.jpg",
     "name": "Futurama Fry",
     "meaning": "Being unable to distinguish between two plausible explanations.",
     "keywords": [
@@ -1114,6 +1153,7 @@
   },
   {
     "id": "stonks",
+    "image_url": "https://i.imgflip.com/3388rw.png",
     "name": "Stonks",
     "meaning": "Celebrating a questionable financial decision with misplaced confidence.",
     "keywords": [

@@ -3,7 +3,7 @@ from pathlib import Path
 import unittest
 
 
-TEXT_FIELDS = {"id", "name", "meaning", "description"}
+TEXT_FIELDS = {"id", "name", "meaning", "description", "image_url"}
 LIST_FIELDS = {"aliases", "keywords", "situations", "emotions", "categories"}
 
 
@@ -30,6 +30,15 @@ class DatasetTests(unittest.TestCase):
     def test_unique_names(self):
         names = [meme["name"].strip().casefold() for meme in self.memes]
         self.assertEqual(len(names), len(set(names)))
+
+    def test_unique_image_urls(self):
+        urls = [meme["image_url"] for meme in self.memes]
+        self.assertEqual(len(urls), len(set(urls)))
+
+    def test_image_url_scheme(self):
+        for meme in self.memes:
+            with self.subTest(name=meme["name"]):
+                self.assertTrue(meme["image_url"].startswith(("http://", "https://")))
 
     def test_kebab_case_ids(self):
         for meme in self.memes:
