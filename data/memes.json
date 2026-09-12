@@ -1,50 +1,1143 @@
 [
   {
+    "id": "distracted-boyfriend",
     "name": "Distracted Boyfriend",
     "meaning": "Being tempted by something new while ignoring an existing commitment.",
-    "keywords": ["boyfriend", "girlfriend", "distraction", "temptation", "jealousy", "guy looking at another girl"],
-    "description": "A guy turns to look at another girl walking past while his girlfriend looks at him in disbelief."
+    "keywords": [
+      "boyfriend",
+      "girlfriend",
+      "distraction",
+      "temptation",
+      "jealousy",
+      "guy looking at another girl"
+    ],
+    "description": "A guy turns to look at another girl walking past while his girlfriend looks at him in disbelief.",
+    "aliases": [
+      "Distracted Man",
+      "Disloyal Boyfriend"
+    ],
+    "situations": [
+      "abandoning a commitment for something new",
+      "man looking at another woman"
+    ],
+    "emotions": [
+      "temptation",
+      "jealousy"
+    ],
+    "categories": [
+      "choice",
+      "relationships"
+    ]
   },
   {
+    "id": "this-is-fine",
     "name": "This Is Fine",
     "meaning": "Pretending everything is okay while a situation falls apart.",
-    "keywords": ["dog", "fire", "fine", "denial", "chaos", "burning room"],
-    "description": "A cartoon dog sits calmly with a drink in a room surrounded by flames."
+    "keywords": [
+      "dog",
+      "fire",
+      "fine",
+      "denial",
+      "chaos",
+      "burning room"
+    ],
+    "description": "A cartoon dog sits calmly with a drink in a room surrounded by flames.",
+    "aliases": [
+      "This Is Fine Dog"
+    ],
+    "situations": [
+      "pretending everything is okay",
+      "ignoring a growing crisis"
+    ],
+    "emotions": [
+      "denial",
+      "anxiety"
+    ],
+    "categories": [
+      "reaction",
+      "irony"
+    ]
   },
   {
+    "id": "drake-hotline-bling",
     "name": "Drake Hotline Bling",
     "meaning": "Rejecting one option and enthusiastically approving another.",
-    "keywords": ["Drake", "choice", "reject", "approve", "preference", "yes", "no"],
-    "description": "Two panels show Drake turning away from one option and smiling while pointing at the other."
+    "keywords": [
+      "Drake",
+      "choice",
+      "reject",
+      "approve",
+      "preference",
+      "yes",
+      "no"
+    ],
+    "description": "Two panels show Drake turning away from one option and smiling while pointing at the other.",
+    "aliases": [
+      "Drakeposting",
+      "Drake Yes No"
+    ],
+    "situations": [
+      "rejecting an option and approving another",
+      "showing a personal preference"
+    ],
+    "emotions": [
+      "approval",
+      "disapproval"
+    ],
+    "categories": [
+      "choice",
+      "comparison"
+    ]
   },
   {
+    "id": "two-buttons",
     "name": "Two Buttons",
     "meaning": "Struggling to choose between two difficult or contradictory options.",
-    "keywords": ["buttons", "decision", "sweating", "dilemma", "choice"],
-    "description": "A cartoon man sweats as he tries to decide which of two red buttons to press."
+    "keywords": [
+      "buttons",
+      "decision",
+      "sweating",
+      "dilemma",
+      "choice"
+    ],
+    "description": "A cartoon man sweats as he tries to decide which of two red buttons to press.",
+    "aliases": [
+      "Daily Struggle",
+      "Sweating Button Guy"
+    ],
+    "situations": [
+      "choosing between two conflicting options",
+      "facing a difficult decision"
+    ],
+    "emotions": [
+      "indecision",
+      "stress"
+    ],
+    "categories": [
+      "choice",
+      "dilemma"
+    ]
   },
   {
+    "id": "woman-yelling-at-a-cat",
     "name": "Woman Yelling at a Cat",
     "meaning": "An angry accusation paired with a confused or unimpressed response.",
-    "keywords": ["woman", "yelling", "cat", "argument", "confused", "dinner"],
-    "description": "A woman points and shouts beside an image of a white cat sitting at a dinner table."
+    "keywords": [
+      "woman",
+      "yelling",
+      "cat",
+      "argument",
+      "confused",
+      "dinner"
+    ],
+    "description": "A woman points and shouts beside an image of a white cat sitting at a dinner table.",
+    "aliases": [
+      "Woman Yelling at Cat",
+      "Smudge the Cat"
+    ],
+    "situations": [
+      "arguing past each other",
+      "responding to an accusation with confusion"
+    ],
+    "emotions": [
+      "anger",
+      "confusion"
+    ],
+    "categories": [
+      "reaction",
+      "conflict"
+    ]
   },
   {
+    "id": "expanding-brain",
     "name": "Expanding Brain",
     "meaning": "A progression of ideas presented as increasingly enlightened, often sarcastically.",
-    "keywords": ["brain", "galaxy", "smart", "ideas", "enlightenment"],
-    "description": "A series of brains becomes larger and more brightly glowing with each successive panel."
+    "keywords": [
+      "brain",
+      "galaxy",
+      "smart",
+      "ideas",
+      "enlightenment"
+    ],
+    "description": "A series of brains becomes larger and more brightly glowing with each successive panel.",
+    "aliases": [
+      "Galaxy Brain",
+      "Big Brain"
+    ],
+    "situations": [
+      "ranking increasingly absurd ideas",
+      "overcomplicating a simple solution"
+    ],
+    "emotions": [
+      "smugness",
+      "awe"
+    ],
+    "categories": [
+      "irony",
+      "comparison"
+    ]
   },
   {
+    "id": "surprised-pikachu",
     "name": "Surprised Pikachu",
     "meaning": "Acting shocked by an obvious or predictable consequence.",
-    "keywords": ["Pikachu", "surprised", "shock", "consequence", "unexpected"],
-    "description": "Pikachu stares ahead with wide eyes and an open mouth in surprise."
+    "keywords": [
+      "Pikachu",
+      "surprised",
+      "shock",
+      "consequence",
+      "unexpected"
+    ],
+    "description": "Pikachu stares ahead with wide eyes and an open mouth in surprise.",
+    "aliases": [
+      "Surprised Pikachu Face",
+      "Shocked Pikachu"
+    ],
+    "situations": [
+      "being shocked by predictable consequences",
+      "ignoring a warning and regretting it"
+    ],
+    "emotions": [
+      "surprise",
+      "disbelief"
+    ],
+    "categories": [
+      "reaction",
+      "irony"
+    ]
   },
   {
+    "id": "success-kid",
     "name": "Success Kid",
     "meaning": "Celebrating a small victory or a moment of good luck.",
-    "keywords": ["kid", "baby", "fist", "success", "winning", "victory"],
-    "description": "A small child on a beach clenches a fist with a determined expression."
+    "keywords": [
+      "kid",
+      "baby",
+      "fist",
+      "success",
+      "winning",
+      "victory"
+    ],
+    "description": "A small child on a beach clenches a fist with a determined expression.",
+    "aliases": [
+      "I Hate Sandcastles"
+    ],
+    "situations": [
+      "celebrating a small win",
+      "getting unexpectedly lucky"
+    ],
+    "emotions": [
+      "pride",
+      "joy"
+    ],
+    "categories": [
+      "success",
+      "reaction"
+    ]
+  },
+  {
+    "id": "uno-draw-25",
+    "name": "UNO Draw 25",
+    "meaning": "Choosing an excessive penalty rather than doing something unwanted.",
+    "keywords": [
+      "uno",
+      "cards",
+      "refusal",
+      "stubborn",
+      "penalty"
+    ],
+    "description": "A card offers an action or drawing 25 cards, followed by a player holding many cards.",
+    "aliases": [
+      "UNO Draw 25 Cards",
+      "Draw 25"
+    ],
+    "situations": [
+      "refusing to admit being wrong",
+      "avoiding an easy but unwanted task"
+    ],
+    "emotions": [
+      "stubbornness",
+      "defiance"
+    ],
+    "categories": [
+      "choice",
+      "irony"
+    ]
+  },
+  {
+    "id": "change-my-mind",
+    "name": "Change My Mind",
+    "meaning": "Presenting a firmly held opinion as a challenge to others.",
+    "keywords": [
+      "debate",
+      "opinion",
+      "sign",
+      "table",
+      "challenge"
+    ],
+    "description": "A man sits behind a table with a sign ending in Change My Mind.",
+    "aliases": [
+      "Steven Crowder Change My Mind"
+    ],
+    "situations": [
+      "defending an unpopular opinion",
+      "challenging people to disagree"
+    ],
+    "emotions": [
+      "confidence",
+      "defiance"
+    ],
+    "categories": [
+      "opinion",
+      "debate"
+    ]
+  },
+  {
+    "id": "disaster-girl",
+    "name": "Disaster Girl",
+    "meaning": "Looking suspiciously pleased while chaos unfolds.",
+    "keywords": [
+      "girl watching fire",
+      "burning house",
+      "smirk",
+      "disaster"
+    ],
+    "description": "A young girl looks back at the camera with a slight smile while a house burns behind her.",
+    "aliases": [
+      "Disaster Girl Smirk"
+    ],
+    "situations": [
+      "enjoying chaos from a distance",
+      "looking guilty after causing trouble"
+    ],
+    "emotions": [
+      "mischief",
+      "satisfaction"
+    ],
+    "categories": [
+      "chaos",
+      "irony"
+    ]
+  },
+  {
+    "id": "hide-the-pain-harold",
+    "name": "Hide the Pain Harold",
+    "meaning": "Masking discomfort or sadness with an unconvincing smile.",
+    "keywords": [
+      "painful smile",
+      "forced smile",
+      "older man",
+      "coffee",
+      "discomfort"
+    ],
+    "description": "An older gray-haired man smiles stiffly, often pictured holding a mug near a laptop.",
+    "aliases": [
+      "Maurice",
+      "Hide Your Pain Harold"
+    ],
+    "situations": [
+      "smiling through an unpleasant experience",
+      "pretending to enjoy work"
+    ],
+    "emotions": [
+      "discomfort",
+      "sadness"
+    ],
+    "categories": [
+      "reaction",
+      "irony"
+    ]
+  },
+  {
+    "id": "grus-plan",
+    "name": "Gru's Plan",
+    "meaning": "Realizing that a carefully explained plan contains an unwanted consequence.",
+    "keywords": [
+      "gru",
+      "presentation",
+      "plan",
+      "whiteboard",
+      "backfire"
+    ],
+    "description": "Gru presents a sequence of steps on a board and then looks back at the unexpected final step.",
+    "aliases": [
+      "Gru Plan",
+      "Gru Presentation"
+    ],
+    "situations": [
+      "bad presentation plan",
+      "discovering a flaw in your own strategy"
+    ],
+    "emotions": [
+      "confusion",
+      "regret"
+    ],
+    "categories": [
+      "failure",
+      "planning"
+    ]
+  },
+  {
+    "id": "is-this-a-pigeon",
+    "name": "Is This a Pigeon?",
+    "meaning": "Confidently mistaking something for a completely different thing.",
+    "keywords": [
+      "pigeon",
+      "butterfly",
+      "anime",
+      "misidentification"
+    ],
+    "description": "An anime character gestures toward a butterfly while asking whether it is a pigeon.",
+    "aliases": [
+      "Is This a Butterfly"
+    ],
+    "situations": [
+      "misunderstanding an obvious concept",
+      "giving something the wrong label"
+    ],
+    "emotions": [
+      "confusion",
+      "curiosity"
+    ],
+    "categories": [
+      "confusion",
+      "irony"
+    ]
+  },
+  {
+    "id": "mocking-spongebob",
+    "name": "Mocking SpongeBob",
+    "meaning": "Repeating another person's words in a sarcastic or mocking tone.",
+    "keywords": [
+      "spongebob",
+      "mocking",
+      "sarcasm",
+      "alternating caps"
+    ],
+    "description": "SpongeBob bends forward with a birdlike posture and a distorted expression.",
+    "aliases": [
+      "SpongeBob Mocking",
+      "Chicken SpongeBob"
+    ],
+    "situations": [
+      "mocking a flimsy excuse",
+      "sarcastically repeating a claim"
+    ],
+    "emotions": [
+      "sarcasm",
+      "annoyance"
+    ],
+    "categories": [
+      "mockery",
+      "reaction"
+    ]
+  },
+  {
+    "id": "boardroom-meeting-suggestion",
+    "name": "Boardroom Meeting Suggestion",
+    "meaning": "Punishing the person who suggests a sensible answer in a dysfunctional group.",
+    "keywords": [
+      "boardroom",
+      "meeting",
+      "boss",
+      "window",
+      "suggestion"
+    ],
+    "description": "Workers offer ideas at a meeting; the boss throws the final speaker out a window.",
+    "aliases": [
+      "Boardroom Suggestion",
+      "Thrown Out the Window"
+    ],
+    "situations": [
+      "a sensible proposal gets rejected",
+      "management refusing practical advice"
+    ],
+    "emotions": [
+      "frustration",
+      "disbelief"
+    ],
+    "categories": [
+      "work",
+      "irony"
+    ]
+  },
+  {
+    "id": "running-away-balloon",
+    "name": "Running Away Balloon",
+    "meaning": "Being held back from something desirable by an obligation or obstacle.",
+    "keywords": [
+      "balloon",
+      "reaching",
+      "held back",
+      "obstacle"
+    ],
+    "description": "A simple comic character reaches for a floating balloon while another figure restrains them.",
+    "aliases": [
+      "Pink Guy Balloon"
+    ],
+    "situations": [
+      "responsibilities blocking a goal",
+      "trying to reach happiness"
+    ],
+    "emotions": [
+      "longing",
+      "frustration"
+    ],
+    "categories": [
+      "obstacles",
+      "desire"
+    ]
+  },
+  {
+    "id": "left-exit-12-off-ramp",
+    "name": "Left Exit 12 Off Ramp",
+    "meaning": "Suddenly abandoning a sensible path for a tempting alternative.",
+    "keywords": [
+      "car",
+      "highway",
+      "exit",
+      "swerve",
+      "detour"
+    ],
+    "description": "A car swerves sharply toward a highway exit beneath a directional sign.",
+    "aliases": [
+      "Highway Exit",
+      "Car Swerving Exit"
+    ],
+    "situations": [
+      "making a sudden bad decision",
+      "abandoning the original plan"
+    ],
+    "emotions": [
+      "impulsiveness",
+      "temptation"
+    ],
+    "categories": [
+      "choice",
+      "irony"
+    ]
+  },
+  {
+    "id": "one-does-not-simply",
+    "name": "One Does Not Simply",
+    "meaning": "Pointing out that an apparently simple task is actually difficult.",
+    "keywords": [
+      "boromir",
+      "mordor",
+      "difficult",
+      "impossible"
+    ],
+    "description": "Boromir raises a hand while explaining a difficult undertaking.",
+    "aliases": [
+      "Boromir"
+    ],
+    "situations": [
+      "underestimating a complicated task",
+      "warning that a shortcut will not work"
+    ],
+    "emotions": [
+      "skepticism",
+      "seriousness"
+    ],
+    "categories": [
+      "difficulty",
+      "advice"
+    ]
+  },
+  {
+    "id": "ancient-aliens",
+    "name": "Ancient Aliens",
+    "meaning": "Offering an absurdly convenient explanation without convincing evidence.",
+    "keywords": [
+      "aliens",
+      "history",
+      "explanation",
+      "theory"
+    ],
+    "description": "A television presenter with swept-up hair gestures with both hands.",
+    "aliases": [
+      "Aliens Guy",
+      "Giorgio Tsoukalos"
+    ],
+    "situations": [
+      "explaining a mystery with wild speculation",
+      "blaming an unlikely cause"
+    ],
+    "emotions": [
+      "certainty",
+      "wonder"
+    ],
+    "categories": [
+      "irony",
+      "explanation"
+    ]
+  },
+  {
+    "id": "waiting-skeleton",
+    "name": "Waiting Skeleton",
+    "meaning": "Waiting so long that the wait feels endless.",
+    "keywords": [
+      "skeleton",
+      "bench",
+      "waiting",
+      "delay"
+    ],
+    "description": "A skeleton sits on a bench as though it has waited there indefinitely.",
+    "aliases": [
+      "Skeleton Waiting",
+      "Still Waiting"
+    ],
+    "situations": [
+      "waiting for a reply",
+      "waiting for a promised release"
+    ],
+    "emotions": [
+      "impatience",
+      "boredom"
+    ],
+    "categories": [
+      "waiting",
+      "reaction"
+    ]
+  },
+  {
+    "id": "bad-luck-brian",
+    "name": "Bad Luck Brian",
+    "meaning": "Experiencing an absurdly unlucky outcome even when trying to succeed.",
+    "keywords": [
+      "brian",
+      "braces",
+      "school photo",
+      "unlucky"
+    ],
+    "description": "A red-haired boy wearing braces and a sweater vest smiles in a school portrait.",
+    "aliases": [
+      "Unlucky Brian"
+    ],
+    "situations": [
+      "a good opportunity turns disastrous",
+      "everything going wrong"
+    ],
+    "emotions": [
+      "disappointment",
+      "embarrassment"
+    ],
+    "categories": [
+      "failure",
+      "bad-luck"
+    ]
+  },
+  {
+    "id": "first-world-problems",
+    "name": "First World Problems",
+    "meaning": "Dramatizing a minor inconvenience from a position of comfort.",
+    "keywords": [
+      "crying",
+      "inconvenience",
+      "luxury",
+      "complaint"
+    ],
+    "description": "A woman presses her hand against her face while appearing to cry.",
+    "aliases": [
+      "First World Problem",
+      "Crying Woman"
+    ],
+    "situations": [
+      "complaining about a trivial inconvenience",
+      "being upset over a luxury problem"
+    ],
+    "emotions": [
+      "frustration",
+      "self-pity"
+    ],
+    "categories": [
+      "irony",
+      "complaints"
+    ]
+  },
+  {
+    "id": "roll-safe",
+    "name": "Roll Safe",
+    "meaning": "Presenting flawed logic as if it were a clever solution.",
+    "keywords": [
+      "temple",
+      "thinking",
+      "loophole",
+      "logic"
+    ],
+    "description": "A smiling man points a finger at his temple.",
+    "aliases": [
+      "Think About It",
+      "Thinking Black Guy"
+    ],
+    "situations": [
+      "using a ridiculous loophole",
+      "avoiding failure by never trying"
+    ],
+    "emotions": [
+      "smugness",
+      "confidence"
+    ],
+    "categories": [
+      "irony",
+      "advice"
+    ]
+  },
+  {
+    "id": "confused-nick-young",
+    "name": "Confused Nick Young",
+    "meaning": "Reacting with disbelief to something that makes little sense.",
+    "keywords": [
+      "nick young",
+      "question marks",
+      "confused",
+      "disbelief"
+    ],
+    "description": "Nick Young tilts his head with a puzzled smile, surrounded by question marks.",
+    "aliases": [
+      "Nick Young Question Marks",
+      "Confused Swaggy P"
+    ],
+    "situations": [
+      "hearing an illogical explanation",
+      "not understanding what someone just said"
+    ],
+    "emotions": [
+      "confusion",
+      "disbelief"
+    ],
+    "categories": [
+      "reaction",
+      "confusion"
+    ]
+  },
+  {
+    "id": "leonardo-dicaprio-laughing",
+    "name": "Leonardo DiCaprio Laughing",
+    "meaning": "Reacting with smug amusement or delight at an ironic situation.",
+    "keywords": [
+      "leonardo",
+      "laughing",
+      "drink",
+      "django",
+      "smug"
+    ],
+    "description": "Leonardo DiCaprio as Calvin Candie laughs while holding a small glass.",
+    "aliases": [
+      "Laughing Leo",
+      "Laughing DiCaprio",
+      "Calvin Candie Laughing"
+    ],
+    "situations": [
+      "enjoying an ironic joke",
+      "feeling smug about someone else's mistake"
+    ],
+    "emotions": [
+      "amusement",
+      "smugness"
+    ],
+    "categories": [
+      "reaction",
+      "irony"
+    ]
+  },
+  {
+    "id": "always-has-been",
+    "name": "Always Has Been",
+    "meaning": "Discovering a hidden truth that another person already knew.",
+    "keywords": [
+      "astronaut",
+      "earth",
+      "space",
+      "revelation"
+    ],
+    "description": "An astronaut looks toward Earth while a second astronaut behind them points a gun.",
+    "aliases": [
+      "Wait It's All Ohio",
+      "Astronaut Gun"
+    ],
+    "situations": [
+      "realizing something was true all along",
+      "discovering a concealed pattern"
+    ],
+    "emotions": [
+      "shock",
+      "realization"
+    ],
+    "categories": [
+      "revelation",
+      "irony"
+    ]
+  },
+  {
+    "id": "trade-offer",
+    "name": "Trade Offer",
+    "meaning": "Framing an exchange as a deal, often with obviously unequal benefits.",
+    "keywords": [
+      "trade",
+      "offer",
+      "receive",
+      "exchange",
+      "deal"
+    ],
+    "description": "A suited man holds his fingertips together beneath a trade offer heading.",
+    "aliases": [
+      "I Receive You Receive"
+    ],
+    "situations": [
+      "proposing an unfair bargain",
+      "describing a humorous exchange"
+    ],
+    "emotions": [
+      "calculation",
+      "hope"
+    ],
+    "categories": [
+      "bargaining",
+      "comparison"
+    ]
+  },
+  {
+    "id": "bernie-once-again-asking",
+    "name": "Bernie I Am Once Again Asking",
+    "meaning": "Repeating a request for help, support, or a long-overdue action.",
+    "keywords": [
+      "bernie",
+      "asking",
+      "support",
+      "request",
+      "coat"
+    ],
+    "description": "Bernie Sanders stands outdoors wearing a winter coat while addressing the camera.",
+    "aliases": [
+      "I Am Once Again Asking for Your Financial Support",
+      "Bernie Sanders Asking"
+    ],
+    "situations": [
+      "asking for help again",
+      "repeating an ignored request"
+    ],
+    "emotions": [
+      "hope",
+      "frustration"
+    ],
+    "categories": [
+      "requests",
+      "repetition"
+    ]
+  },
+  {
+    "id": "batman-slapping-robin",
+    "name": "Batman Slapping Robin",
+    "meaning": "Abruptly interrupting or correcting another person's statement.",
+    "keywords": [
+      "batman",
+      "robin",
+      "slap",
+      "interrupt",
+      "correction"
+    ],
+    "description": "A comic panel shows Batman slapping Robin as they speak.",
+    "aliases": [
+      "Batman Slap",
+      "Robin Gets Slapped"
+    ],
+    "situations": [
+      "shutting down a bad take",
+      "interrupting an unwanted comment"
+    ],
+    "emotions": [
+      "anger",
+      "annoyance"
+    ],
+    "categories": [
+      "conflict",
+      "reaction"
+    ]
+  },
+  {
+    "id": "monkey-puppet",
+    "name": "Monkey Puppet",
+    "meaning": "Looking away awkwardly to avoid admitting involvement or embarrassment.",
+    "keywords": [
+      "puppet",
+      "side eye",
+      "looking away",
+      "awkward"
+    ],
+    "description": "A monkey puppet glances sideways and then faces forward.",
+    "aliases": [
+      "Awkward Look Monkey",
+      "Monkey Looking Away"
+    ],
+    "situations": [
+      "pretending not to notice",
+      "avoiding eye contact after an awkward remark"
+    ],
+    "emotions": [
+      "awkwardness",
+      "guilt"
+    ],
+    "categories": [
+      "reaction",
+      "avoidance"
+    ]
+  },
+  {
+    "id": "same-picture",
+    "name": "They're The Same Picture",
+    "meaning": "Claiming that two supposedly different things are effectively identical.",
+    "keywords": [
+      "pam",
+      "office",
+      "pictures",
+      "identical",
+      "difference"
+    ],
+    "description": "An office comparison asks for differences between two pictures; Pam says they are the same.",
+    "aliases": [
+      "They Are The Same Picture",
+      "Corporate Needs You to Find the Difference"
+    ],
+    "situations": [
+      "comparing things with no meaningful difference",
+      "calling out superficial rebranding"
+    ],
+    "emotions": [
+      "certainty",
+      "sarcasm"
+    ],
+    "categories": [
+      "comparison",
+      "irony"
+    ]
+  },
+  {
+    "id": "bike-fall",
+    "name": "Bike Fall",
+    "meaning": "Causing one's own problem and blaming someone else.",
+    "keywords": [
+      "bicycle",
+      "stick",
+      "wheel",
+      "fall",
+      "blame"
+    ],
+    "description": "A cyclist puts a stick into the front wheel, crashes, and complains.",
+    "aliases": [
+      "Baton Roue",
+      "Stick in Bike Wheel"
+    ],
+    "situations": [
+      "blaming others for a self-inflicted problem",
+      "sabotaging your own progress"
+    ],
+    "emotions": [
+      "anger",
+      "denial"
+    ],
+    "categories": [
+      "failure",
+      "blame"
+    ]
+  },
+  {
+    "id": "clown-applying-makeup",
+    "name": "Clown Applying Makeup",
+    "meaning": "Showing a progression of increasingly foolish beliefs or decisions.",
+    "keywords": [
+      "clown",
+      "makeup",
+      "wig",
+      "foolish"
+    ],
+    "description": "Successive panels show a person applying clown makeup and completing the costume.",
+    "aliases": [
+      "Putting On Clown Makeup",
+      "Clown Makeup"
+    ],
+    "situations": [
+      "doubling down on a bad argument",
+      "realizing how foolish you have been"
+    ],
+    "emotions": [
+      "embarrassment",
+      "self-deprecation"
+    ],
+    "categories": [
+      "failure",
+      "irony"
+    ]
+  },
+  {
+    "id": "panik-kalm-panik",
+    "name": "Panik Kalm Panik",
+    "meaning": "Moving from panic to brief reassurance and back to panic.",
+    "keywords": [
+      "panik",
+      "kalm",
+      "panic",
+      "calm",
+      "fluctuation"
+    ],
+    "description": "Three illustrated panels alternate between an alarmed face, a calm face, and renewed alarm.",
+    "aliases": [
+      "Panik Kalm",
+      "Panic Calm Panic"
+    ],
+    "situations": [
+      "finding temporary reassurance before worse news",
+      "a solution reveals another problem"
+    ],
+    "emotions": [
+      "panic",
+      "relief",
+      "anxiety"
+    ],
+    "categories": [
+      "reaction",
+      "reversal"
+    ]
+  },
+  {
+    "id": "epic-handshake",
+    "name": "Epic Handshake",
+    "meaning": "Finding common ground between otherwise different groups.",
+    "keywords": [
+      "handshake",
+      "arms",
+      "agreement",
+      "alliance"
+    ],
+    "description": "A close-up shows two muscular arms clasping hands.",
+    "aliases": [
+      "Predator Handshake",
+      "Dillon You Son of a Bitch"
+    ],
+    "situations": [
+      "opposing groups agreeing on one thing",
+      "forming an unexpected alliance"
+    ],
+    "emotions": [
+      "solidarity",
+      "respect"
+    ],
+    "categories": [
+      "agreement",
+      "comparison"
+    ]
+  },
+  {
+    "id": "distracted-anakin-padme",
+    "name": "Anakin Padme",
+    "meaning": "An optimistic assumption gives way to concern when reassurance never comes.",
+    "keywords": [
+      "anakin",
+      "padme",
+      "star wars",
+      "right",
+      "silence"
+    ],
+    "description": "Anakin and Padme talk in a meadow as Padme's smile turns concerned.",
+    "aliases": [
+      "Anakin Padme 4 Panel",
+      "For the Better Right"
+    ],
+    "situations": [
+      "assuming a change will be good",
+      "waiting for reassurance after a worrying statement"
+    ],
+    "emotions": [
+      "hope",
+      "unease"
+    ],
+    "categories": [
+      "reaction",
+      "reversal"
+    ]
+  },
+  {
+    "id": "evil-kermit",
+    "name": "Evil Kermit",
+    "meaning": "An internal debate between sensible behavior and a tempting bad impulse.",
+    "keywords": [
+      "kermit",
+      "hood",
+      "inner voice",
+      "temptation"
+    ],
+    "description": "Kermit faces a hooded version of himself.",
+    "aliases": [
+      "Kermit Inner Me",
+      "Dark Kermit"
+    ],
+    "situations": [
+      "arguing with your own bad impulses",
+      "talking yourself into a poor decision"
+    ],
+    "emotions": [
+      "temptation",
+      "conflict"
+    ],
+    "categories": [
+      "choice",
+      "self-control"
+    ]
+  },
+  {
+    "id": "futurama-fry",
+    "name": "Futurama Fry",
+    "meaning": "Being unable to distinguish between two plausible explanations.",
+    "keywords": [
+      "fry",
+      "squinting",
+      "suspicion",
+      "uncertain"
+    ],
+    "description": "Fry narrows his eyes in a skeptical close-up.",
+    "aliases": [
+      "Not Sure If",
+      "Suspicious Fry"
+    ],
+    "situations": [
+      "not sure whether something is intentional",
+      "questioning what is really happening"
+    ],
+    "emotions": [
+      "suspicion",
+      "uncertainty"
+    ],
+    "categories": [
+      "reaction",
+      "confusion"
+    ]
+  },
+  {
+    "id": "stonks",
+    "name": "Stonks",
+    "meaning": "Celebrating a questionable financial decision with misplaced confidence.",
+    "keywords": [
+      "stocks",
+      "finance",
+      "profit",
+      "chart",
+      "meme man"
+    ],
+    "description": "A smooth computer-generated face stands before a market graphic labeled Stonks.",
+    "aliases": [
+      "Meme Man Stonks"
+    ],
+    "situations": [
+      "calling a bad purchase an investment",
+      "celebrating dubious financial logic"
+    ],
+    "emotions": [
+      "confidence",
+      "smugness"
+    ],
+    "categories": [
+      "irony",
+      "money"
+    ]
   }
 ]

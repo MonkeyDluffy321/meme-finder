@@ -7,7 +7,11 @@ from rapidfuzz.fuzz import ratio
 
 # Ignore common words so descriptions focus on their useful terms.
 STOP_WORDS = {"a", "an", "the", "is", "at", "in", "on", "of", "to", "and", "with"}
-FIELD_WEIGHTS = {"name": 8, "keywords": 6, "meaning": 3, "description": 1}
+FIELD_WEIGHTS = {
+    "name": 8, "aliases": 7, "keywords": 6, "situations": 6,
+    "meaning": 3, "emotions": 3, "categories": 3, "description": 1,
+}
+LIST_FIELDS = {"aliases", "keywords", "situations", "emotions", "categories"}
 FUZZY_CUTOFF = 85
 SOLO_FUZZY_CUTOFF = 90
 MIN_COVERAGE = 0.6
@@ -55,8 +59,8 @@ def search_memes(memes, query):
         similarities = dict.fromkeys(query_words, 0.0)
         phrase_bonus = 0
         for field, weight in FIELD_WEIGHTS.items():
-            # Keep keyword phrases separate so adjacent entries cannot form a phrase.
-            values = meme[field] if field == "keywords" else [meme[field]]
+            # Missing metadata supports legacy records; phrases stay within list items.
+            values = meme.get(field, []) if field in LIST_FIELDS else [meme[field]]
             field_words = set()
             for value in values:
                 field_words.update(tokenize(value))
