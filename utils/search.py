@@ -1,12 +1,16 @@
 """Field-weighted local text search with conservative typo tolerance."""
 
 import re
+from collections import Counter
+from math import log
 
 from rapidfuzz.fuzz import ratio
 
 
 # Ignore common words so descriptions focus on their useful terms.
 STOP_WORDS = {"a", "an", "the", "is", "at", "in", "on", "of", "to", "and", "with"}
+CONTEXT_WORDS = {"by", "another", "during", "while"}
+PERSON_WORDS = {"man", "guy", "person", "woman"}
 FIELD_WEIGHTS = {
     "name": 8, "aliases": 7, "keywords": 6, "situations": 6,
     "meaning": 3, "emotions": 3, "categories": 3, "description": 1,
@@ -38,60 +42,112 @@ def tokenize(text):
     return set(normalized_words(text)) - STOP_WORDS
 
 
-def search_memes(memes, query):
-    """Rank exact tokens, normalized phrases, and conservative fuzzy tokens.
+def metadata_items(meme):
+    """Keep list-item boundaries and support records without optional metadata."""
+    for field in FIELD_WEIGHTS:
+        values = meme.get(field, []) if field in LIST_FIELDS else [meme.get(field, "")]
+        for value in values:
+            yield field, normalized_words(value), tokenize(value)
 
-    Require 60% query-token coverage and stronger evidence for fuzzy-only
-    single-token matches. Return original records, preserving order on ties.
+
+def name_similarity(query_words, name_words):
+    """Recover multi-token names without relaxing general token matching.
+
+    Every ordered token must align; short words and numbers must be exact.
+    At least one token must be a strong anchor, even when others have typos.
     """
+    if len(query_words) < 2 or len(query_words) != len(name_words):
+        return 0
+    scores = []
+    for word, candidate in zip(query_words, name_words):
+        if word == candidate:
+            scores.append(100)
+        elif fuzzy_eligible(word) and fuzzy_eligible(candidate):
+            scores.append(ratio(word, candidate))
+        else:
+            return 0
+    if min(scores) < 70 or max(scores) < 90:
+        return 0
+    return ratio(" ".join(query_words), " ".join(name_words), score_cutoff=82)
+
+
+def search_memes(memes, query):
+    """Admit useful evidence, then rank complete names, exact context, and typos.
+
+    IDF counts each record once. Equal ranks retain input order and results
+    remain the original objects. No model, persistent cache, or mutation.
+    """
+    memes = list(memes)
     if not query.strip():
         return list(memes)
 
-    query_words = tokenize(query)
+    query_words = tokenize(query) - CONTEXT_WORDS
     if not query_words:
         return []
 
     phrase_words = normalized_words(query)
     phrase = " " + " ".join(phrase_words) + " "
+    items = [list(metadata_items(meme)) for meme in memes]
+    frequencies = Counter(word for record_items in items
+                          for word in set().union(*(item[2] for item in record_items)))
+    idf = {word: log(1 + (len(memes) - count + 0.5) / (count + 0.5))
+           for word, count in frequencies.items()}
+    informative = query_words - PERSON_WORDS
+    # Generic people alone need a complete name/alias, not an incidental mention.
+    generic_only = not informative
+    evidence_words = informative or query_words
+    name_scores = [max((name_similarity(phrase_words, words)
+                       for field, words, _ in record_items if field in {"name", "aliases"}),
+                      default=0) for record_items in items]
+    ordered_scores = sorted(name_scores, reverse=True)
+    runner_up = ordered_scores[1] if len(ordered_scores) > 1 else 0
     ranked = []
-    for meme in memes:
-        best_scores = dict.fromkeys(query_words, 0.0)
-        similarities = dict.fromkeys(query_words, 0.0)
+    for index, (meme, record_items) in enumerate(zip(memes, items)):
+        best_scores = dict.fromkeys(sorted(evidence_words), 0.0)
+        similarities = dict.fromkeys(sorted(evidence_words), 0.0)
         phrase_bonus = 0
-        for field, weight in FIELD_WEIGHTS.items():
-            # Missing metadata supports legacy records; phrases stay within list items.
-            values = meme.get(field, []) if field in LIST_FIELDS else [meme[field]]
-            field_words = set()
-            for value in values:
-                field_words.update(tokenize(value))
-                normalized = " " + " ".join(normalized_words(value)) + " "
-                if len(phrase_words) > 1 and phrase in normalized:
-                    phrase_bonus = max(phrase_bonus, 2 * weight)
-
-            for word in query_words:
+        complete_name = False
+        coherent_count = 0
+        for field, words, field_words in record_items:
+            weight = FIELD_WEIGHTS[field]
+            complete_name |= field in {"name", "aliases"} and words == phrase_words
+            normalized = " " + " ".join(words) + " "
+            if len(phrase_words) > 1 and phrase in normalized:
+                phrase_bonus = max(phrase_bonus, 2 * weight)
+            coherent_count = max(coherent_count, len(evidence_words & field_words))
+            for word in best_scores:
                 if word in field_words:
                     similarity = 100
-                    token_score = weight
+                    token_score = weight * idf[word]
                 elif fuzzy_eligible(word):
-                    similarity = max(
-                        (ratio(word, candidate, score_cutoff=FUZZY_CUTOFF)
-                         for candidate in field_words if fuzzy_eligible(candidate)),
-                        default=0,
-                    )
-                    token_score = weight * 0.75 * similarity / 100
+                    matches = [(ratio(word, candidate, score_cutoff=FUZZY_CUTOFF), candidate)
+                               for candidate in sorted(field_words) if fuzzy_eligible(candidate)]
+                    similarity = max((value for value, _ in matches), default=0)
+                    # Weight fuzzy evidence by the matched corpus term, not an
+                    # unseen misspelling's artificially high rarity.
+                    token_score = max((weight * 0.75 * value / 100 * idf[candidate]
+                                       for value, candidate in matches), default=0)
                 else:
                     similarity = token_score = 0
                 best_scores[word] = max(best_scores[word], token_score)
                 similarities[word] = max(similarities[word], similarity)
 
         matched = [value for value in similarities.values() if value]
-        if len(matched) / len(query_words) < MIN_COVERAGE:
+        coverage = len(matched) / len(evidence_words)
+        recovered_name = name_scores[index] >= 82 and name_scores[index] - runner_up >= 5
+        admitted_tokens = coverage >= MIN_COVERAGE and not (
+            len(matched) == 1 and matched[0] < SOLO_FUZZY_CUTOFF)
+        if not complete_name and (generic_only or not (admitted_tokens or recovered_name)):
             continue
-        if len(matched) == 1 and matched[0] < SOLO_FUZZY_CUTOFF:
-            continue
+        exact_coverage = sum(value == 100 for value in similarities.values()) / len(evidence_words)
+        coherent = coherent_count / len(evidence_words)
+        strong_exact = exact_coverage >= MIN_COVERAGE and (
+            phrase_bonus > 0 or coherent >= MIN_COVERAGE)
+        tier = 3 if complete_name else 2 if strong_exact else 1
+        score = (sum(best_scores.values()) * (1 + 0.25 * coherent) + phrase_bonus) * coverage
+        if recovered_name:
+            score += FIELD_WEIGHTS["name"] * name_scores[index] / 100
+        ranked.append((tier, score, meme))
 
-        score = (sum(best_scores.values()) + phrase_bonus) * len(matched) / len(query_words)
-        ranked.append((score, meme))
-
-    ranked.sort(key=lambda item: item[0], reverse=True)
-    return [meme for score, meme in ranked]
+    ranked.sort(key=lambda item: item[:2], reverse=True)
+    return [meme for tier, score, meme in ranked]
