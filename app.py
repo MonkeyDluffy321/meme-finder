@@ -9,8 +9,11 @@ import streamlit as st
 
 from utils.filters import filter_memes, filter_options
 from utils.images import load_preview
-from utils.search import search_memes
+from utils.search import normalize_query, search_memes
 from utils.account_ui import render_account
+from utils.auth import current_account
+from utils.library import LibraryError, fetch_library, resolve_memes
+from utils.library_ui import navigate, card_actions
 
 
 DATA_PATH = Path(__file__).parent / "data" / "memes.json"
@@ -22,6 +25,8 @@ st.html("<style>" + Path(__file__).with_name("ui.css").read_text(encoding="utf-8
 
 
 def reset_page():
+    if st.session_state.get("library_view", "home") != "home":
+        navigate("home")
     st.session_state.page = 0
 
 
@@ -39,12 +44,14 @@ def reset_filters():
 
 
 def browse_all():
+    navigate("home")
     clear_search()
     reset_filters()
 
 
 def turn_page(offset):
-    st.session_state.page += offset
+    key = "library_page" if st.session_state.get("library_view", "home") != "home" else "page"
+    st.session_state[key] += offset
 
 
 def quick_category_changed():
@@ -81,10 +88,13 @@ with st.sidebar:
     with st.container(key="navigation"):
         st.button("Home", icon=":material/home:", on_click=browse_all,
                   type="primary", use_container_width=True, key="home")
-        for label, icon in [("Explore", "explore"), ("Categories", "category"),
-                            ("Saved", "bookmark"), ("Recently Viewed", "history")]:
+        for label, icon in [("Explore", "explore"), ("Categories", "category")]:
             st.button(label, icon=f":material/{icon}:", disabled=True,
                       help="Not available in this prototype", use_container_width=True)
+        st.button("Saved", icon=":material/bookmark:", on_click=navigate,
+                  args=("saved",), key="saved", use_container_width=True)
+        st.button("Recently Viewed", icon=":material/history:", on_click=navigate,
+                  args=("recent",), key="recent", use_container_width=True)
     with st.container(key="product_info"):
         st.divider()
         st.caption("Meme Finder V2")
@@ -131,24 +141,57 @@ if categories or emotions:
     st.button("Reset filters", icon=":material/filter_alt_off:",
               on_click=reset_filters, key="reset_filters")
 
-search_results = search_memes(memes, query)
+search_query = normalize_query(query)
+search_results = search_memes(memes, search_query)
 results = filter_memes(search_results, categories, emotions)
+account = current_account(st.session_state)
+view = st.session_state.get("library_view", "home")
+saved_ids = []
+library_error = None
+if account is not None:
+    try:
+        saved_ids = fetch_library(st.session_state)
+    except LibraryError as error:
+        library_error = str(error)
+if view != "home":
+    if account is None:
+        results = []
+        st.info("Please sign in using Account in the sidebar to use your library.")
+    else:
+        try:
+            ids = fetch_library(st.session_state, recent=True) if view == "recent" else saved_ids
+            results = resolve_memes(memes, ids)
+        except LibraryError as error:
+            library_error = str(error)
+            results = []
+if library_error:
+    st.warning(library_error)
+notice = st.session_state.pop("library_notice", None)
+if notice:
+    st.info(notice)
 st.divider()
-st.subheader(f"Results for '{query.strip()}'" if query.strip() else "Browse Memes")
+st.subheader(("Recently Viewed" if view == "recent" else "Saved Memes") if view != "home"
+             else (f"Results for '{query.strip()}'" if query.strip() else "Browse Memes"))
 st.caption(f"{len(results)} template{'s' if len(results) != 1 else ''}"
-           + (" matching your filters" if categories or emotions else ""))
+           + (" matching your filters" if view == "home" and (categories or emotions) else ""))
 
 if not results:
-    if search_results and (categories or emotions):
+    if view != "home":
+        if account is not None and not library_error:
+            st.info("No recently viewed memes yet. Open a meme's details to get started."
+                    if view == "recent" else "No saved memes yet. Save a meme to find it here.")
+    elif search_results and (categories or emotions):
         st.info("No templates match these filters. Remove a category or emotion to widen your results.")
     else:
         st.info("No meme matched that description. Try describing the scene, emotion, situation, or meme name.")
-elif not query.strip() and not categories and not emotions:
+elif view == "home" and not query.strip() and not categories and not emotions:
     st.caption("Familiar favorites from the collection")
 
+page_key = "page" if view == "home" else "library_page"
+st.session_state.setdefault(page_key, 0)
 page_count = max(1, (len(results) + PAGE_SIZE - 1) // PAGE_SIZE)
-st.session_state.page = min(st.session_state.page, page_count - 1)
-start = st.session_state.page * PAGE_SIZE
+st.session_state[page_key] = min(st.session_state[page_key], page_count - 1)
+start = st.session_state[page_key] * PAGE_SIZE
 visible_results = results[start:start + PAGE_SIZE]
 
 with st.container(key="results"):
@@ -175,7 +218,7 @@ with st.container(key="results"):
                     st.html('<div class="mf-tags">' + ''.join(
                         f'<span class="mf-tag {kind}">{escape(tag)}</span>'
                         for tag, kind in tags) + '</div>')
-                    with st.expander("More details", expanded=False):
+                    if card_actions(meme, saved_ids):
                         st.caption("Categories: " + ", ".join(meme.get("categories", [])))
                         st.caption("Emotions: " + ", ".join(meme.get("emotions", [])))
                         if meme.get("aliases"):
@@ -192,12 +235,12 @@ if page_count > 1:
     previous, page_label, following = st.columns([1, 2, 1])
     with previous:
         st.button("Previous", icon=":material/chevron_left:", key="previous",
-                  on_click=turn_page, args=(-1,), disabled=st.session_state.page == 0)
+                  on_click=turn_page, args=(-1,), disabled=st.session_state[page_key] == 0)
     with page_label:
-        st.caption(f"Page {st.session_state.page + 1} of {page_count}")
+        st.caption(f"Page {st.session_state[page_key] + 1} of {page_count}")
     with following:
         st.button("Next", icon=":material/chevron_right:", key="next",
-                  on_click=turn_page, args=(1,), disabled=st.session_state.page >= page_count - 1)
+                  on_click=turn_page, args=(1,), disabled=st.session_state[page_key] >= page_count - 1)
 
 st.divider()
 st.subheader("Explore by Emotion")

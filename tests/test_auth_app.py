@@ -34,7 +34,7 @@ class AuthAppTests(unittest.TestCase):
         self.assertFalse(self.app.exception)
         self.assertEqual(self.app.text_input[0].key, "query")
         self.factory.assert_not_called()
-        for label in ["Explore", "Categories", "Saved", "Recently Viewed"]:
+        for label in ["Explore", "Categories"]:
             self.assertTrue(next(b for b in self.app.button if b.label == label).disabled)
 
     def test_login_logout_preserve_query_filters_and_results(self):
@@ -68,3 +68,11 @@ class AuthAppTests(unittest.TestCase):
         self.submit("Sign up")
         self.client.auth.sign_up.assert_called_once()
         self.assertEqual(self.app.session_state[ACCOUNT_KEY].user_id, "user-a")
+
+    def test_both_account_modes_require_submit_button(self):
+        for mode in ["Log in", "Sign up"]:
+            self.app.radio(key="auth_mode").set_value(mode).run()
+            forms = self.app.get("form")
+            self.assertEqual(len(forms), 1)
+            self.assertFalse(forms[0].proto.form.enter_to_submit)
+            self.factory.assert_not_called()

@@ -34,7 +34,7 @@ def render_account():
                 st.caption("An account is optional. Browse and search as a guest.")
                 st.radio("Account action", ["Log in", "Sign up"], key="auth_mode",
                          horizontal=True, label_visibility="collapsed")
-                with st.form("auth_form", clear_on_submit=True):
+                with st.form("auth_form", clear_on_submit=True, enter_to_submit=False):
                     st.text_input("Email", key="auth_email")
                     st.text_input("Password", type="password", key="auth_password")
                     st.form_submit_button(st.session_state.auth_mode,

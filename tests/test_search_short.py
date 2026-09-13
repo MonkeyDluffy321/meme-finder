@@ -4,7 +4,7 @@ from pathlib import Path
 import unittest
 from unittest.mock import patch
 
-from utils.search import search_memes
+from utils.search import normalize_query, normalized_words, search_memes
 
 
 class ShortSearchTests(unittest.TestCase):
@@ -26,6 +26,29 @@ class ShortSearchTests(unittest.TestCase):
         self.assertEqual(set(self.names("woman")), {"Woman Yelling at a Cat", "First World Problems", "Distracted Boyfriend"})
         self.assertIn("Ancient Aliens", self.names("guy"))
         self.assertIn("Disaster Girl", self.names("girl"))
+
+    def test_irregular_people_plurals_match_singular_order(self):
+        for plural, singular in [("women", "woman"), ("men", "man"),
+                                 ("crying women", "crying woman"), ("older men", "older man")]:
+            with self.subTest(query=plural):
+                self.assertTrue(self.names(singular))
+                self.assertEqual(self.names(plural), self.names(singular))
+
+    def test_irregular_normalization_is_whole_token_and_bidirectional(self):
+        self.assertEqual(normalize_query("WOMEN, men! menu womenhood"),
+                         "woman, man! menu womenhood")
+        self.assertEqual(normalized_words("WOMEN men 2 womenhood menu"),
+                         ["woman", "man", "two", "womenhood", "menu"])
+        for singular, plural in [("woman", "women"), ("man", "men")]:
+            strong = {"name": "Example", "keywords": [plural]}
+            weak = {"name": "Other", "description": "Some " + plural + " are visible nearby"}
+            self.assertEqual(search_memes([weak, strong], singular), [strong])
+            self.assertEqual(search_memes([weak, strong], plural), [strong])
+
+    def test_hybrid_fallback_receives_canonical_query(self):
+        with patch("utils.search.semantic_fallback", return_value=[]) as fallback:
+            search_memes([], "women exploring a distant lunar observatory")
+            fallback.assert_called_once_with([], "woman exploring a distant lunar observatory")
 
     def test_representative_short_searches(self):
         cases = {

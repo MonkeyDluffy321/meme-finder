@@ -57,6 +57,9 @@ def current_account(state):
 
 
 def clear_private_state(state):
+    for key in list(state):
+        if key.startswith("library_"):
+            state.pop(key, None)
     for key in PRIVATE_KEYS:
         state.pop(key, None)
 
