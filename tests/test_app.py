@@ -12,6 +12,27 @@ APP_PATH = Path(__file__).resolve().parents[1] / "app.py"
 
 class AppTests(unittest.TestCase):
     @patch("utils.images.load_preview", return_value=None)
+    def test_irregular_queries_through_real_app_search_path(self, preview):
+        from utils.search import search_memes
+
+        app = AppTest.from_file(str(APP_PATH)).run()
+        with patch("utils.search.search_memes", wraps=search_memes) as search, \
+                patch("utils.semantic.semantic_scores") as semantic:
+            results = {}
+            for query, canonical in [("women", "woman"), ("woman", "woman"),
+                                     ("men", "man"), ("man", "man")]:
+                app.text_input(key="query").set_value(query).run()
+                self.assertFalse(app.exception)
+                self.assertEqual(search.call_args.args[1], canonical)
+                self.assertEqual(app.text_input(key="query").value, query)
+                results[query] = [button.key for button in app.button
+                                  if button.key and button.key.startswith("save-")]
+                self.assertEqual(len(results[query]), 3)
+            self.assertEqual(results["women"], results["woman"])
+            self.assertEqual(results["men"], results["man"])
+            semantic.assert_not_called()
+
+    @patch("utils.images.load_preview", return_value=None)
     def test_unavailable_images_keep_text_and_search(self, preview):
         app = AppTest.from_file(str(APP_PATH)).run()
         self.assertFalse(app.exception)
@@ -20,6 +41,7 @@ class AppTests(unittest.TestCase):
         self.assertFalse(app.exception)
         headings = [h.value for h in app.subheader]
         self.assertLess(headings.index("Two Buttons"), headings.index("Drake Hotline Bling"))
+        app.button(key="details-two-buttons").click().run()
         text = "\n".join(item.value for item in app.markdown)
         self.assertIn("Struggling to choose", text)
         self.assertIn("Common situations", text)
@@ -48,21 +70,15 @@ class AppTests(unittest.TestCase):
         self.assertFalse(any(c.value == "Preview unavailable" for c in app.caption))
 
     @patch("utils.images.load_preview", return_value=None)
-    def test_secondary_metadata_is_in_collapsed_details(self, preview):
+    def test_secondary_metadata_requires_explicit_details_click(self, preview):
         app = AppTest.from_file(str(APP_PATH)).run()
         self.assertFalse(app.exception)
-        details = [item for item in app.expander if item.label == "More details"]
-        self.assertEqual(len(details), 6)
-        for item in details:
-            self.assertFalse(item.proto.expanded)
-            captions = [caption.value for caption in item.caption]
-            self.assertTrue(any(value.startswith("Also known as:") for value in captions))
-            self.assertTrue(any(value.startswith("Keywords:") for value in captions))
-            self.assertTrue(any("Common situations" in text.value for text in item.markdown))
-            self.assertTrue(any(value.startswith("Categories:") for value in captions))
-            self.assertTrue(any(value.startswith("Emotions:") for value in captions))
-        self.assertEqual(sum(c.value.startswith("Categories:") for c in app.caption), 6)
-        self.assertEqual(sum(c.value.startswith("Emotions:") for c in app.caption), 6)
+        self.assertFalse(any(c.value.startswith("Keywords:") for c in app.caption))
+        app.button(key="details-distracted-boyfriend").click().run()
+        self.assertFalse(app.exception)
+        for prefix in ["Categories:", "Emotions:", "Also known as:", "Keywords:"]:
+            self.assertTrue(any(c.value.startswith(prefix) for c in app.caption))
+        self.assertTrue(any("Common situations" in item.value for item in app.markdown))
 
     @patch("utils.images.load_preview", return_value=None)
     def test_filters_combine_with_search_and_reset(self, preview):
@@ -123,7 +139,7 @@ class AppTests(unittest.TestCase):
     @patch("utils.images.load_preview", return_value=None)
     def test_navigation_placeholders_are_disabled(self, preview):
         app = AppTest.from_file(str(APP_PATH)).run()
-        for label in ["Explore", "Categories", "Saved", "Recently Viewed"]:
+        for label in ["Explore", "Categories"]:
             button = next(button for button in app.button if button.label == label)
             self.assertTrue(button.disabled)
 

@@ -27,11 +27,19 @@ NUMBER_WORDS = (
     "sixteen", "seventeen", "eighteen", "nineteen", "twenty",
 )
 DIGIT_WORDS = {str(number): word for number, word in enumerate(NUMBER_WORDS)}
+IRREGULAR_WORDS = {"women": "woman", "men": "man"}
+
+
+def normalize_query(text):
+    """Canonicalize only explicit whole-token aliases before hybrid search."""
+    return re.sub(r"\w+", lambda match: IRREGULAR_WORDS.get(
+        match.group().lower(), match.group()), text)
 
 
 def normalized_words(text):
-    """Normalize case and standalone digits 0-20, preserving word order."""
-    return [DIGIT_WORDS.get(word, word) for word in re.findall(r"\w+", text.lower())]
+    """Normalize case, digits 0-20, and two explicit irregular plurals."""
+    return [DIGIT_WORDS.get(word, word)
+            for word in re.findall(r"\w+", normalize_query(text).lower())]
 
 
 def fuzzy_eligible(word):
@@ -79,6 +87,7 @@ def search_memes(memes, query):
     IDF counts each record once. Equal ranks retain input order and results
     remain the original objects. Semantic fallback runs only if none qualify.
     """
+    query = normalize_query(query)
     memes = list(memes)
     if not query.strip():
         return list(memes)
