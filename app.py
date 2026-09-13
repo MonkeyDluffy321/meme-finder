@@ -10,6 +10,7 @@ import streamlit as st
 from utils.filters import filter_memes, filter_options
 from utils.images import load_preview
 from utils.search import search_memes
+from utils.account_ui import render_account
 
 
 DATA_PATH = Path(__file__).parent / "data" / "memes.json"
@@ -207,3 +208,6 @@ quick_emotions = [tag for tag in ["joy", "stress", "confusion", "sadness", "ange
 st.pills("Explore emotions", quick_emotions, key="quick_emotion",
          on_change=quick_emotion_changed, format_func=str.title,
          label_visibility="collapsed")
+
+# Render after search widgets to preserve their ordering and existing callbacks.
+render_account()
