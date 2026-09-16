@@ -14,6 +14,7 @@ from utils.account_ui import render_account
 from utils.auth import current_account
 from utils.library import LibraryError, fetch_library, resolve_memes
 from utils.library_ui import navigate, card_actions
+from utils.intelligence_ui import render_intelligence
 
 
 DATA_PATH = Path(__file__).parent / "data" / "memes.json"
@@ -97,7 +98,7 @@ with st.sidebar:
                   args=("recent",), key="recent", use_container_width=True)
     with st.container(key="product_info"):
         st.divider()
-        st.caption("Meme Finder V2")
+        st.caption("Meme Finder V3")
         st.caption(f"{len(memes)} templates in the collection")
         st.caption("Local discovery. No account needed.")
         st.caption("Previews hosted by Imgflip.")
@@ -251,6 +252,9 @@ quick_emotions = [tag for tag in ["joy", "stress", "confusion", "sadness", "ange
 st.pills("Explore emotions", quick_emotions, key="quick_emotion",
          on_change=quick_emotion_changed, format_func=str.title,
          label_visibility="collapsed")
+
+if view == "home":
+    render_intelligence(memes)
 
 # Render after search widgets to preserve their ordering and existing callbacks.
 render_account()

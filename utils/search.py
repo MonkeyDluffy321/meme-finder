@@ -81,7 +81,7 @@ def name_similarity(query_words, name_words):
     return ratio(" ".join(query_words), " ".join(name_words), score_cutoff=82)
 
 
-def search_memes(memes, query):
+def search_memes(memes, query, *, use_semantic=True):
     """Admit useful evidence, then rank complete names, exact context, and typos.
 
     IDF counts each record once. Equal ranks retain input order and results
@@ -181,4 +181,4 @@ def search_memes(memes, query):
     ranked.sort(key=lambda item: item[:2], reverse=True)
     if ranked:
         return [meme for tier, score, meme in ranked]
-    return semantic_fallback(memes, query)
+    return semantic_fallback(memes, query) if use_semantic else []
