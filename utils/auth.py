@@ -57,11 +57,15 @@ def current_account(state):
 
 
 def clear_private_state(state):
+    generation = state.get("v3_generation", 0) + 1 if any(k.startswith("v3_") for k in state) else None
     for key in list(state):
-        if key.startswith("library_"):
+        if key.startswith(("library_", "v3_")):
             state.pop(key, None)
     for key in PRIVATE_KEYS:
         state.pop(key, None)
+    if generation is not None:
+        # Rotate the uploader identity so the browser cannot restore the old file.
+        state["v3_generation"] = generation
 
 
 def ensure_profile(account):
