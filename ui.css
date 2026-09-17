@@ -45,3 +45,8 @@
 @media (prefers-reduced-motion: reduce) {
   .st-key-results [class*="st-key-card-"] {transition: none;}
 }
+
+/* Creator previews use their real aspect ratio, independently of result cards. */
+.st-key-creator_editor, .st-key-creator_preview {min-width: 0; max-width: 100%;}
+.st-key-creator_preview img, .st-key-creator_source img {height: auto; max-width: 100%; object-fit: contain;}
+.st-key-creator_preview {border: 1px solid #293752; border-radius: 12px; padding: 1rem; background: #121C30;}
