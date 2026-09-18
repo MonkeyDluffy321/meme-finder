@@ -19,6 +19,7 @@ from utils.creator_ui import open_creator, render_creator
 
 
 DATA_PATH = Path(__file__).parent / "data" / "memes.json"
+IMPORTED_DATA_PATH = Path(__file__).parent / "data" / "imported_memes.json"
 PAGE_SIZE = 6
 
 st.set_page_config(page_title="Meme Finder", page_icon=":material/image_search:", layout="wide")
@@ -81,7 +82,22 @@ def advanced_filters_changed():
 
 try:
     memes = json.loads(DATA_PATH.read_text(encoding="utf-8"))
-except (OSError, json.JSONDecodeError):
+
+    if IMPORTED_DATA_PATH.exists():
+        imported_memes = json.loads(
+            IMPORTED_DATA_PATH.read_text(encoding="utf-8")
+        )
+
+        if isinstance(imported_memes, list):
+            existing_ids = {meme["id"] for meme in memes}
+
+            memes.extend(
+                meme
+                for meme in imported_memes
+                if meme.get("id") not in existing_ids
+            )
+
+except (OSError, json.JSONDecodeError, TypeError, KeyError):
     st.error("The collection could not be loaded. Please try again later.")
     st.stop()
 
