@@ -1,12 +1,14 @@
 """Small, memory-only cache for remote template previews."""
 
 from http.client import HTTPException
+from pathlib import Path
 from urllib.request import Request, urlopen
 
 import streamlit as st
 
 
 MAX_IMAGE_BYTES = 5 * 1024 * 1024
+IMPORTED_IMAGE_DIR = Path(__file__).resolve().parents[1] / "data" / "imported_images"
 
 
 @st.cache_data(ttl=300, max_entries=64, show_spinner=False)
@@ -22,4 +24,24 @@ def load_preview(url):
             content = response.read(MAX_IMAGE_BYTES + 1)
         return content if 0 < len(content) <= MAX_IMAGE_BYTES else None
     except (OSError, ValueError, HTTPException):
+        return None
+@st.cache_data(ttl=300, max_entries=64, show_spinner=False)
+def load_local_preview(filename):
+    """Load a bounded image only from data/imported_images."""
+    if not isinstance(filename, str) or not filename.strip():
+        return None
+
+    if Path(filename).name != filename:
+        return None
+
+    path = IMPORTED_IMAGE_DIR / filename
+
+    try:
+        content = path.read_bytes()
+
+        if not content or len(content) > MAX_IMAGE_BYTES:
+            return None
+
+        return content
+    except OSError:
         return None

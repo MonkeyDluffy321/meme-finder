@@ -11,7 +11,18 @@ from utils.semantic import semantic_fallback
 
 # Ignore common words so descriptions focus on their useful terms.
 STOP_WORDS = {"a", "an", "the", "is", "at", "in", "on", "of", "to", "and", "with"}
-CONTEXT_WORDS = {"by", "another", "during", "while"}
+CONTEXT_WORDS = {
+    "by",
+    "another",
+    "during",
+    "while",
+    "situation",
+    "scenario",
+    "moment",
+    "trying",
+    "something",
+    "thing",
+}
 STRUCTURED_FIELDS = {"name", "aliases", "keywords", "situations", "emotions", "categories"}
 FIELD_WEIGHTS = {
     "name": 8, "aliases": 7, "keywords": 6, "situations": 6,
@@ -28,12 +39,36 @@ NUMBER_WORDS = (
 )
 DIGIT_WORDS = {str(number): word for number, word in enumerate(NUMBER_WORDS)}
 IRREGULAR_WORDS = {"women": "woman", "men": "man"}
+QUERY_ALIASES = {
+    "uncomfortable": "awkward",
+    "embarrassing": "embarrassment",
+    "embarrassed": "embarrassment",
+    "ignore": "avoid",
+    "ignoring": "avoid",
+    "choice": "decision",
+    "choices": "decision",
+}
 
 
 def normalize_query(text):
     """Canonicalize only explicit whole-token aliases before hybrid search."""
-    return re.sub(r"\w+", lambda match: IRREGULAR_WORDS.get(
-        match.group().lower(), match.group()), text)
+    text = re.sub(
+        r"\w+",
+        lambda match: QUERY_ALIASES.get(
+            match.group().lower(),
+            match.group()
+        ),
+        text,
+    )
+
+    return re.sub(
+        r"\w+",
+        lambda match: IRREGULAR_WORDS.get(
+            match.group().lower(),
+            match.group()
+        ),
+        text,
+    )
 
 
 def normalized_words(text):

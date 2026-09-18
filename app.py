@@ -8,16 +8,18 @@ from pathlib import Path
 import streamlit as st
 
 from utils.filters import filter_memes, filter_options
-from utils.images import load_preview
+from utils.images import load_preview, load_local_preview
 from utils.search import normalize_query, search_memes
 from utils.account_ui import render_account
 from utils.auth import current_account
 from utils.library import LibraryError, fetch_library, resolve_memes
 from utils.library_ui import navigate, card_actions
 from utils.intelligence_ui import render_intelligence
+from utils.creator_ui import open_creator, render_creator
 
 
 DATA_PATH = Path(__file__).parent / "data" / "memes.json"
+IMPORTED_DATA_PATH = Path(__file__).parent / "data" / "imported_memes.json"
 PAGE_SIZE = 6
 
 st.set_page_config(page_title="Meme Finder", page_icon=":material/image_search:", layout="wide")
@@ -45,9 +47,14 @@ def reset_filters():
 
 
 def browse_all():
-    navigate("home")
+    show_library("home")
     clear_search()
     reset_filters()
+
+
+def show_library(view):
+    st.session_state.creator_active = False
+    navigate(view)
 
 
 def turn_page(offset):
@@ -75,7 +82,22 @@ def advanced_filters_changed():
 
 try:
     memes = json.loads(DATA_PATH.read_text(encoding="utf-8"))
-except (OSError, json.JSONDecodeError):
+
+    if IMPORTED_DATA_PATH.exists():
+        imported_memes = json.loads(
+            IMPORTED_DATA_PATH.read_text(encoding="utf-8")
+        )
+
+        if isinstance(imported_memes, list):
+            existing_ids = {meme["id"] for meme in memes}
+
+            memes.extend(
+                meme
+                for meme in imported_memes
+                if meme.get("id") not in existing_ids
+            )
+
+except (OSError, json.JSONDecodeError, TypeError, KeyError):
     st.error("The collection could not be loaded. Please try again later.")
     st.stop()
 
@@ -88,13 +110,17 @@ with st.sidebar:
         st.caption("Memes for every moment")
     with st.container(key="navigation"):
         st.button("Home", icon=":material/home:", on_click=browse_all,
-                  type="primary", use_container_width=True, key="home")
+                  type="secondary" if st.session_state.get("creator_active") else "primary",
+                  use_container_width=True, key="home")
+        st.button("Create", icon=":material/edit:", on_click=open_creator,
+                  type="primary" if st.session_state.get("creator_active") else "secondary",
+                  key="create", use_container_width=True)
         for label, icon in [("Explore", "explore"), ("Categories", "category")]:
             st.button(label, icon=f":material/{icon}:", disabled=True,
                       help="Not available in this prototype", use_container_width=True)
-        st.button("Saved", icon=":material/bookmark:", on_click=navigate,
+        st.button("Saved", icon=":material/bookmark:", on_click=show_library,
                   args=("saved",), key="saved", use_container_width=True)
-        st.button("Recently Viewed", icon=":material/history:", on_click=navigate,
+        st.button("Recently Viewed", icon=":material/history:", on_click=show_library,
                   args=("recent",), key="recent", use_container_width=True)
     with st.container(key="product_info"):
         st.divider()
@@ -102,6 +128,15 @@ with st.sidebar:
         st.caption(f"{len(memes)} templates in the collection")
         st.caption("Local discovery. No account needed.")
         st.caption("Previews hosted by Imgflip.")
+
+if st.session_state.get("creator_active", False):
+    # Preserve discovery controls while their widgets are absent. Never assign
+    # uploader state: creator images/captions live in the independent draft.
+    for key in ("query", "categories", "emotions", "quick_category", "quick_emotion"):
+        if key in st.session_state:
+            st.session_state[key] = st.session_state[key]
+    render_creator()
+    st.stop()
 
 st.html('''<header class="mf-hero">
 <div class="eyebrow">MEMES CONNECT PEOPLE</div>
@@ -202,33 +237,70 @@ with st.container(key="results"):
             with column:
                 with st.container(key="card-" + meme["id"]):
                     with st.container(key="preview-" + meme["id"]):
-                        preview = load_preview(meme.get("image_url"))
+                        if meme.get("local_image"):
+                            preview = load_local_preview(meme.get("local_image"))
+                        else:
+                            preview = load_preview(meme.get("image_url"))
+
                         if preview is None:
                             st.caption("Preview unavailable")
                         else:
                             try:
                                 st.image(BytesIO(preview), use_container_width=True)
                             except Exception:
-                                # A corrupt remote preview must never hide the template details.
+                                # A corrupt preview must never hide the template details.
                                 st.caption("Preview unavailable")
+
                     st.subheader(meme["name"])
+
                     with st.container(key="meaning-" + meme["id"]):
                         st.write(meme["meaning"])
+
                     tags = [(tag, "") for tag in meme.get("categories", [])[:2]]
                     tags += [(tag, "emotion") for tag in meme.get("emotions", [])[:1]]
-                    st.html('<div class="mf-tags">' + ''.join(
-                        f'<span class="mf-tag {kind}">{escape(tag)}</span>'
-                        for tag, kind in tags) + '</div>')
+
+                    st.html(
+                        '<div class="mf-tags">' +
+                        ''.join(
+                            f'<span class="mf-tag {kind}">{escape(tag)}</span>'
+                            for tag, kind in tags
+                        ) +
+                        '</div>'
+                    )
+
                     if card_actions(meme, saved_ids):
-                        st.caption("Categories: " + ", ".join(meme.get("categories", [])))
-                        st.caption("Emotions: " + ", ".join(meme.get("emotions", [])))
+                        st.caption(
+                            "Categories: " +
+                            ", ".join(meme.get("categories", []))
+                        )
+                        st.caption(
+                            "Emotions: " +
+                            ", ".join(meme.get("emotions", []))
+                        )
+
                         if meme.get("aliases"):
-                            st.caption("Also known as: " + ", ".join(meme["aliases"]))
+                            st.caption(
+                                "Also known as: " +
+                                ", ".join(meme["aliases"])
+                            )
+
                         if meme.get("situations"):
                             st.markdown("**Common situations**")
-                            st.markdown("\n".join("- " + value for value in meme["situations"]))
+                            st.markdown(
+                                "\n".join(
+                                    "- " + value
+                                    for value in meme["situations"]
+                                )
+                            )
+
                         st.write(meme["description"])
-                        st.caption("Keywords: " + ", ".join(meme["keywords"]))
+                        st.caption(
+                            "Keywords: " +
+                            ", ".join(meme["keywords"])
+                        )
+            
+                        
+                    
 
 if results:
     st.caption(f"Showing {start + 1}-{min(start + PAGE_SIZE, len(results))} of {len(results)}")
