@@ -8,7 +8,7 @@ from pathlib import Path
 import streamlit as st
 
 from utils.filters import filter_memes, filter_options
-from utils.images import load_preview
+from utils.images import load_preview, load_local_preview
 from utils.search import normalize_query, search_memes
 from utils.account_ui import render_account
 from utils.auth import current_account
@@ -237,33 +237,70 @@ with st.container(key="results"):
             with column:
                 with st.container(key="card-" + meme["id"]):
                     with st.container(key="preview-" + meme["id"]):
-                        preview = load_preview(meme.get("image_url"))
+                        if meme.get("local_image"):
+                            preview = load_local_preview(meme.get("local_image"))
+                        else:
+                            preview = load_preview(meme.get("image_url"))
+
                         if preview is None:
                             st.caption("Preview unavailable")
                         else:
                             try:
                                 st.image(BytesIO(preview), use_container_width=True)
                             except Exception:
-                                # A corrupt remote preview must never hide the template details.
+                                # A corrupt preview must never hide the template details.
                                 st.caption("Preview unavailable")
+
                     st.subheader(meme["name"])
+
                     with st.container(key="meaning-" + meme["id"]):
                         st.write(meme["meaning"])
+
                     tags = [(tag, "") for tag in meme.get("categories", [])[:2]]
                     tags += [(tag, "emotion") for tag in meme.get("emotions", [])[:1]]
-                    st.html('<div class="mf-tags">' + ''.join(
-                        f'<span class="mf-tag {kind}">{escape(tag)}</span>'
-                        for tag, kind in tags) + '</div>')
+
+                    st.html(
+                        '<div class="mf-tags">' +
+                        ''.join(
+                            f'<span class="mf-tag {kind}">{escape(tag)}</span>'
+                            for tag, kind in tags
+                        ) +
+                        '</div>'
+                    )
+
                     if card_actions(meme, saved_ids):
-                        st.caption("Categories: " + ", ".join(meme.get("categories", [])))
-                        st.caption("Emotions: " + ", ".join(meme.get("emotions", [])))
+                        st.caption(
+                            "Categories: " +
+                            ", ".join(meme.get("categories", []))
+                        )
+                        st.caption(
+                            "Emotions: " +
+                            ", ".join(meme.get("emotions", []))
+                        )
+
                         if meme.get("aliases"):
-                            st.caption("Also known as: " + ", ".join(meme["aliases"]))
+                            st.caption(
+                                "Also known as: " +
+                                ", ".join(meme["aliases"])
+                            )
+
                         if meme.get("situations"):
                             st.markdown("**Common situations**")
-                            st.markdown("\n".join("- " + value for value in meme["situations"]))
+                            st.markdown(
+                                "\n".join(
+                                    "- " + value
+                                    for value in meme["situations"]
+                                )
+                            )
+
                         st.write(meme["description"])
-                        st.caption("Keywords: " + ", ".join(meme["keywords"]))
+                        st.caption(
+                            "Keywords: " +
+                            ", ".join(meme["keywords"])
+                        )
+            
+                        
+                    
 
 if results:
     st.caption(f"Showing {start + 1}-{min(start + PAGE_SIZE, len(results))} of {len(results)}")
