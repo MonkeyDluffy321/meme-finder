@@ -1,4 +1,4 @@
-"""Bounded direct-image downloads; no redirects, proxies, or private networks."""
+"""Bounded HTTP downloads; no redirects, proxies, or private networks."""
 
 from http.client import HTTPConnection, HTTPSConnection, HTTPException
 from ipaddress import ip_address
@@ -13,7 +13,9 @@ from utils.uploads import MAX_BYTES
 TIMEOUT = 5
 
 
-def download_image(url):
+def download_resource(url, *, content_types=("image/",), max_bytes=MAX_BYTES, timeout=TIMEOUT,
+                      respect_indexing=False):
+    """Shared safety layer for images and crawler HTML/robots responses."""
     connection = None
     try:
         if not isinstance(url, str) or any(ord(c) <= 32 or ord(c) == 127 for c in url):
@@ -31,37 +33,45 @@ def download_image(url):
         # Pin the validated IP, while retaining the hostname for Host and TLS
         # certificate verification. A second DNS lookup cannot change the target.
         address = addresses[0][4][0]
-        deadline = monotonic() + TIMEOUT
+        deadline = monotonic() + timeout
         connection_type = HTTPSConnection if parsed.scheme == "https" else HTTPConnection
-        connection = connection_type(host, port, timeout=TIMEOUT)
+        connection = connection_type(host, port, timeout=timeout)
         connection._create_connection = lambda *args, **kwargs: socket.create_connection(
             (address, port), timeout=max(0.001, deadline - monotonic()))
         connection.connect()
         transport = connection.sock
         transport.settimeout(max(0.001, deadline - monotonic()))
         connection.request("GET", (parsed.path or "/") + ("?" + parsed.query if parsed.query else ""),
-                           headers={"User-Agent": "MemeFinder/1.0", "Accept": "image/*",
+                           headers={"User-Agent": "MemeFinder/1.0",
+                                    "Accept": ", ".join(kind + "*" if kind.endswith("/") else kind
+                                                        for kind in content_types),
                                     "Accept-Encoding": "identity"})
         with connection.getresponse() as response:
             if response.status != 200:
                 raise ImportError("Image download failed. Use a direct image URL without redirects.")
-            if not response.getheader("Content-Type", "").lower().startswith("image/"):
-                raise ImportError("The URL must return an image content type.")
+            media_type = response.getheader("Content-Type", "").lower().split(";")[0].strip()
+            if not any(media_type.startswith(kind) if kind.endswith("/") else media_type == kind
+                       for kind in content_types):
+                raise ImportError("The URL must return an image content type." if content_types == ("image/",)
+                                  else "Unsupported response content type.")
+            if respect_indexing and any(token in response.getheader("X-Robots-Tag", "").lower()
+                                        for token in ("noindex", "noimageindex", "none")):
+                raise ImportError("Source disallows indexing.")
             length = response.getheader("Content-Length")
-            if length is not None and (int(length) < 0 or int(length) > MAX_BYTES):
-                raise ImportError("Choose an image up to 10 MB.")
+            if length is not None and (int(length) < 0 or int(length) > max_bytes):
+                raise ImportError("Choose an image up to 10 MB." if max_bytes == MAX_BYTES else "Response exceeds download limit.")
             content = bytearray()
-            while len(content) <= MAX_BYTES:
+            while len(content) <= max_bytes:
                 remaining = deadline - monotonic()
                 if remaining <= 0:
                     raise TimeoutError
                 transport.settimeout(remaining)
-                chunk = response.read1(min(64 * 1024, MAX_BYTES + 1 - len(content)))
+                chunk = response.read1(min(64 * 1024, max_bytes + 1 - len(content)))
                 if not chunk:
                     break
                 content.extend(chunk)
-            if len(content) > MAX_BYTES:
-                raise ImportError("Choose an image up to 10 MB.")
+            if len(content) > max_bytes:
+                raise ImportError("Choose an image up to 10 MB." if max_bytes == MAX_BYTES else "Response exceeds download limit.")
             if length is not None and len(content) != int(length):
                 raise ImportError("Image download was incomplete. Please try again.")
             return bytes(content)
@@ -72,6 +82,10 @@ def download_image(url):
     finally:
         if connection is not None:
             connection.close()
+
+
+def download_image(url, *, respect_indexing=False):
+    return download_resource(url, respect_indexing=respect_indexing)
 
 
 def import_meme_url(metadata, url, *, data_dir=None):
