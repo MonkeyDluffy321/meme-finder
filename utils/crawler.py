@@ -194,4 +194,5 @@ def crawl(seeds, memes, *, provider=None, max_pages=MAX_PAGES,
                     hashes.append((fingerprint, candidate["id"]))
             except Exception as error:
                 report["errors"].append({"url": url, "reason": str(error)})
+    report["pages_processed"] = len(pages)
     return report
