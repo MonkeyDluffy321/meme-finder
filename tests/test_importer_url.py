@@ -81,7 +81,7 @@ class URLImporterTests(unittest.TestCase):
             with self.assertRaisesRegex(ImportError, "content type"):
                 self.save()
         self.response.status = 302
-        with self.assertRaisesRegex(ImportError, "without redirects"):
+        with self.assertRaisesRegex(ImportError, "missing Location"):
             self.save()
         self.response.read1.assert_not_called()
 
