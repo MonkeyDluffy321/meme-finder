@@ -3,6 +3,7 @@
 import streamlit as st
 
 from utils.importer import ImportError, import_meme
+from utils.importer_url import import_meme_url
 
 
 @st.dialog("Import Meme")
@@ -11,6 +12,8 @@ def render_importer():
     with st.form("importer_form"):
         upload = st.file_uploader("Meme image", type=["jpg", "jpeg", "png", "webp"],
                                   key="importer_image")
+        url = st.text_input("Image URL (optional)", key="importer_url",
+                            help="Direct HTTP/HTTPS image URL. Upload a file or enter a URL, not both.")
         metadata = {
             "name": st.text_input("Name", key="importer_name"),
             "meaning": st.text_area("Meaning", key="importer_meaning"),
@@ -21,7 +24,12 @@ def render_importer():
         submitted = st.form_submit_button("Import", type="primary")
     if submitted:
         try:
-            record = import_meme(metadata, upload.getvalue() if upload is not None else b"")
+            if url.strip() and upload is not None:
+                raise ImportError("Choose either an uploaded image or an Image URL.")
+            if url.strip():
+                record = import_meme_url(metadata, url.strip())
+            else:
+                record = import_meme(metadata, upload.getvalue() if upload is not None else b"")
         except ImportError as error:
             st.error(str(error))
             return
