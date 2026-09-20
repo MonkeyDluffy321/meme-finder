@@ -16,6 +16,7 @@ from utils.library import LibraryError, fetch_library, resolve_memes
 from utils.library_ui import navigate, card_actions
 from utils.intelligence_ui import render_intelligence
 from utils.creator_ui import open_creator, render_creator
+from utils.importer_ui import render_importer
 
 
 DATA_PATH = Path(__file__).parent / "data" / "memes.json"
@@ -115,6 +116,9 @@ with st.sidebar:
         st.button("Create", icon=":material/edit:", on_click=open_creator,
                   type="primary" if st.session_state.get("creator_active") else "secondary",
                   key="create", use_container_width=True)
+        if st.button("Import Meme", icon=":material/upload:", key="import_meme",
+                     use_container_width=True):
+            render_importer()
         for label, icon in [("Explore", "explore"), ("Categories", "category")]:
             st.button(label, icon=f":material/{icon}:", disabled=True,
                       help="Not available in this prototype", use_container_width=True)
@@ -128,6 +132,9 @@ with st.sidebar:
         st.caption(f"{len(memes)} templates in the collection")
         st.caption("Local discovery. No account needed.")
         st.caption("Previews hosted by Imgflip.")
+
+if notice := st.session_state.pop("importer_notice", None):
+    st.success(notice)
 
 if st.session_state.get("creator_active", False):
     # Preserve discovery controls while their widgets are absent. Never assign
