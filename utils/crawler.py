@@ -78,16 +78,17 @@ def extract_images(html, page, limit=MAX_IMAGES_PER_PAGE):
     return [] if parser.blocked else parser.urls
 
 
-def catalog_hashes(memes):
+def catalog_hashes(memes, *, image_dir=None):
     """Read existing hashes and bounded local images, never prepare/download references."""
+    image_dir = Path(image_dir) if image_dir is not None else LOCAL_IMAGES
     hashes = [(row["hash"], row["id"]) for row in read_index(memes)]
     exact = {}
     for meme in memes:
         filename = meme.get("local_image")
         if not isinstance(filename, str) or not filename or "/" in filename or "\\" in filename:
             continue
-        path = LOCAL_IMAGES / filename
-        if path.resolve().parent != LOCAL_IMAGES.resolve():
+        path = image_dir / filename
+        if path.resolve().parent != image_dir.resolve():
             continue
         try:
             with path.open("rb") as handle:
