@@ -19,6 +19,12 @@ class ImportError(ValueError):
     """An importer error suitable for display to the user."""
 
 
+class DuplicateError(ImportError):
+    def __init__(self, identity):
+        self.identity = identity
+        super().__init__(f"Meme ID '{identity}' already exists. Choose another name.")
+
+
 def meme_id(name):
     text = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode()
     slug = re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")[:100].rstrip("-")
@@ -79,8 +85,8 @@ def _write_records(path, records):
             temporary.unlink(missing_ok=True)
 
 
-def import_meme(metadata, content, *, data_dir=None):
-    """Import bytes; data_dir is trusted application configuration, never user input."""
+def prepare_record(metadata):
+    """Validate and normalize metadata without reading or writing files."""
     record = {}
     for field in ("name", "meaning"):
         value = metadata.get(field, "")
@@ -96,6 +102,22 @@ def import_meme(metadata, content, *, data_dir=None):
         record[field] = normalize_list(value)
         if field != "aliases" and not record[field]:
             raise ImportError(f"{field.title()} is required.")
+    return record
+
+
+def import_meme(metadata, content, *, data_dir=None, duplicate_check=None, provenance=None):
+    """Import bytes; configuration and duplicate_check are trusted backend inputs.
+
+    duplicate_check(records, upload, root) runs under the catalog lock before
+    image creation and returns an existing ID, or None.
+    """
+    record = prepare_record(metadata)
+    if provenance is not None:
+        for field in ("source_page", "source_image_url"):
+            value = provenance.get(field)
+            if not isinstance(value, str) or not value.strip():
+                raise ImportError(f"{field} is required.")
+            record[field] = value
     try:
         upload = validate_upload(content)
     except UploadError as error:
@@ -122,7 +144,11 @@ def import_meme(metadata, content, *, data_dir=None):
             main = _read_records(root / "memes.json")
             imported = _read_records(target, optional=True)
             if any(meme["id"] == record["id"] for meme in main + imported):
-                raise ImportError(f"Meme ID '{record['id']}' already exists. Choose another name.")
+                raise DuplicateError(record["id"])
+            if duplicate_check is not None:
+                duplicate = duplicate_check(main + imported, upload, root)
+                if duplicate:
+                    raise DuplicateError(duplicate)
             image_dir.mkdir(exist_ok=True)
             record["local_image"] = f"{record['id']}-{uuid4().hex}.png"
             candidate = image_dir / record["local_image"]
