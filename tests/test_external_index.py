@@ -81,7 +81,8 @@ class ExternalIndexTests(unittest.TestCase):
     def test_duplicates_merge_aliases_and_namespace_provider_ids(self):
         duplicate = {**self.rows[0], "name": "Office Cat", "aliases": ["Boss Cat"]}
         mirrored = {**self.rows[0], "provider": "other", "template_id": "cat"}
-        distinct = {**self.rows[0], "provider": "other", "image_url": "https://example.com/other.jpg"}
+        distinct = {**self.rows[0], "provider": "other", "image_url": "https://example.com/other.jpg",
+                    "source_page": "https://example.com/different-template"}
         rows = clean_records([self.rows[0], duplicate, mirrored, distinct])
         self.assertEqual(len(rows), 2)
         self.assertIn("Boss Cat", rows[0]["aliases"])

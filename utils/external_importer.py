@@ -17,11 +17,15 @@ def import_templates(input_path, *, provider, index_path=INDEX_PATH, source=None
     protected = {DATA_DIR / name for name in ("memes.json", "imported_memes.json", "catalog_review.json")}
     if path in {item.resolve() for item in protected}:
         raise ValueError("External imports cannot target catalog/review files.")
-    with Path(input_path).open("rb") as handle:
-        raw = handle.read(MAX_INDEX_BYTES + 1)
-    if len(raw) > MAX_INDEX_BYTES:
-        raise ValueError("Provider export exceeds byte limit.")
-    rows = json.loads(raw)
+    if provider == "memegen-repository":
+        from utils.external_repository import repository_records
+        rows = repository_records(input_path)
+    else:
+        with Path(input_path).open("rb") as handle:
+            raw = handle.read(MAX_INDEX_BYTES + 1)
+        if len(raw) > MAX_INDEX_BYTES:
+            raise ValueError("Provider export exceeds byte limit.")
+        rows = json.loads(raw)
     if not isinstance(rows, list) or len(rows) > MAX_RECORDS:
         raise ValueError("Expected a bounded provider JSON list.")
     if provider not in PROVIDERS:
@@ -30,10 +34,16 @@ def import_templates(input_path, *, provider, index_path=INDEX_PATH, source=None
     if not incoming:
         raise ValueError("No valid templates; existing index unchanged.")
     previous = read_index(path) if path.exists() else {"version": 1, "records": [], "imports": []}
+    previous_records = clean_records(previous["records"])
+    previous_by_id = {(row["provider"], row["template_id"]): row for row in previous_records}
+    for position, row in enumerate(incoming):
+        old = previous_by_id.get((row["provider"], row["template_id"]))
+        if old:
+            incoming[position] = clean_records([row, old])[0]
     keys = {(row["provider"], row["template_id"]) for row in incoming}
-    retained = [row for row in clean_records(previous["records"])
+    retained = [row for row in previous_records
                 if (row["provider"], row["template_id"]) not in keys]
-    records = clean_records([*incoming, *retained])
+    records = clean_records([*retained, *incoming])
     records.sort(key=lambda row: (row["provider"], row["template_id"]))
     if len(records) > MAX_RECORDS:
         raise ValueError("Combined index exceeds record limit.")

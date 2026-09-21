@@ -66,6 +66,8 @@ Name, provider, template ID and image URL are required. Aliases default to an
 empty list; source page may be null. Text fields/aliases are capped at 200
 characters, aliases at 32, URLs at 2,048 characters. The file is capped at 8 MiB
 and 10,000 records. Import provenance retains the last 20 import summaries.
+Each record also retains up to 32 validated `provenance` references containing
+provider, template ID, image URL and source page, including merged providers.
 
 Malformed rows are skipped; broken/missing/unsupported/oversized index files
 yield no external results. URL validation rejects unsupported schemes,
@@ -74,9 +76,12 @@ search. Safe preview downloads validate DNS and every redirect at request time.
 Unknown fields are discarded, including injected local-file paths or UI flags.
 In-memory results receive `external_result=true` and a provider-namespaced hashed ID.
 
-Duplicate provider/template IDs and normalized image URLs collapse to one result;
-alternate names/aliases are retained where space permits. Different images with
-the same name are not automatically assumed identical.
+Duplicate provider/template IDs, normalized image URLs, or normalized names on
+the same specific source page collapse to one result. Source-page comparison
+ignores HTTP/HTTPS and trailing slashes, but preserves host, path and query.
+Alternate names/aliases and provider references are retained where space permits.
+Equal names alone do not merge different templates. Existing primary records
+win cross-provider merges; matching provider IDs can still be refreshed.
 
 ## Providers and imports
 
@@ -88,12 +93,41 @@ Business Cat was absent, so a separate JSON source supplies its published name,
 aliases, ID and blank image from the [public template page](https://imgflip.com/memetemplate/Business-Cat).
 The initial combined index contains 210 templates.
 
+The expanded snapshot contains **712 templates** (2026-09-21). The new
+`memegen-repository` provider reads the public
+[tenequm/memegen-rs template corpus](https://github.com/tenequm/memegen-rs/tree/625ea96cb67cd73032139697f7a014efa8e8d729/templates)
+at revision `625ea96cb67cd73032139697f7a014efa8e8d729`: 700 template folders,
+699 readable entries, 683 valid unique incoming records before merging with
+the existing index. Coverage grows by 502 records after cross-provider deduplication.
+Names and aliases come from YAML metadata and template slugs; no individual
+templates are hard-coded. Examples include Absolute Cinema and additional
+modern formats. It's A Trap remains searchable (it was already in the Memegen
+snapshot as `ackbar`). Image URLs point to revision-pinned public repository
+assets, avoiding dependence on the provider's hosted rendering API.
+
 Save an updated provider export locally, then run from the repository root:
 
 ```powershell
 python -m utils.external_importer --provider memegen --input tmp/memegen_templates.json --source https://api.memegen.link/templates/
 python -m utils.external_importer --provider json --input data/external_sources/additional_templates.json
 ```
+
+For a bulk repository refresh, explicitly download only its metadata, then run
+the offline adapter (use a reviewed commit when updating the snapshot):
+
+```powershell
+git clone --depth 1 --filter=blob:none --sparse https://github.com/tenequm/memegen-rs.git tmp/memegen-source
+git -C tmp/memegen-source sparse-checkout set --no-cone '/*' '!/*/' '/templates/*/config.yml'
+git -C tmp/memegen-source rev-parse HEAD
+python -m utils.external_importer --provider memegen-repository --input tmp/memegen-source --source https://github.com/tenequm/memegen-rs
+```
+
+Git supplies tracked image paths without downloading the image corpus. The adapter
+reads bounded local YAML files with `safe_load`, rejects malformed metadata through
+the shared validator, and disables Git lazy fetching. It never executes repository
+code. PyYAML is already installed through existing RapidOCR/huggingface_hub dependencies;
+no additional package is required. Bulk acquisition is an administrator action;
+search remains entirely offline until the existing explicit crawler fallback.
 
 `--index` selects a separate index path for development. The importer explicitly
 rejects the permanent catalog and review paths. It adapts a batch, validates and
@@ -124,6 +158,7 @@ candidate identity enrichment and crawler protections are unchanged.
 | `utils/search.py`, `utils/semantic.py` | Existing V1 ranking |
 | `utils/external_index.py` | Validation, deduplication, cached index loading and search |
 | `utils/external_providers.py` | Memegen-export and generic-JSON adapters |
+| `utils/external_repository.py` | Offline bulk repository metadata adapter with revision-pinned images |
 | `utils/external_importer.py` | Explicit bounded atomic import CLI |
 | `data/external_templates.json` | Searchable external metadata snapshot and provenance |
 | `data/external_sources/additional_templates.json` | Maintainable supplemental source records |
@@ -142,6 +177,9 @@ unknown-query fallback, missing/malformed files, URL validation, duplicate recor
 cache invalidation, copy isolation, repeat imports, atomic-write failures,
 protected catalog paths, and safe preview validation. Existing V1, crawler,
 catalog and Streamlit regressions remain part of the full suite.
+Repository tests additionally cover pinned URLs, malformed/oversized/unsafe YAML,
+missing images, read failures, repeat imports, cross-provider provenance and
+expanded shipped coverage. No network is required by these tests.
 
 ```powershell
 python -m unittest discover -s tests -p 'test_external_index*.py' -q
@@ -154,7 +192,10 @@ Imports are manual snapshots; deleted upstream templates remain until explicitly
 removed from the external index. Preview availability and upstream metadata are
 not guaranteed. External templates have not been human-curated or assigned local
 category/emotion tags. Cross-provider visual duplicates and moderation are not
-solved by URL/ID deduplication. Lookup uses an exact-name map followed by a bounded
+fully solved by URL/ID/name-and-source deduplication. Variants sharing a name and
+source page may collapse; different names/sources can still hide visual duplicates.
+Upstream image rights and availability are not implied by metadata inclusion.
+Lookup uses an exact-name map followed by a bounded
 linear V1 scan; the JSON backend targets thousands, not millions, of records.
 
 The live crawler still has its existing total budget of 2 pages/4 images, normally

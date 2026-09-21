@@ -28,4 +28,5 @@ def json_records(rows):
     yield from rows
 
 
-PROVIDERS = {"memegen": memegen_records, "json": json_records}
+PROVIDERS = {"memegen": memegen_records, "json": json_records,
+             "memegen-repository": json_records}
