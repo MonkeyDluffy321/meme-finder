@@ -57,6 +57,8 @@ class ReviewQueue:
         with self._locked():
             rows = self.entries()
             known = {row["queue_id"] for row in rows}
+            image_urls = {row["candidate"].get("source_image_url") for row in rows}
+            digests = {row["candidate"].get("content_sha256") for row in rows}
             added = []
             for candidate in candidates:
                 if not isinstance(candidate, dict) or not all(
@@ -65,10 +67,14 @@ class ReviewQueue:
                     raise ReviewError("Candidate source URLs are required.")
                 identity = sha256(json.dumps([candidate["source_page"], candidate["source_image_url"],
                                              candidate.get("content_sha256", "")]).encode()).hexdigest()
-                if identity not in known:
+                digest = candidate.get("content_sha256")
+                if (identity not in known and candidate["source_image_url"] not in image_urls
+                        and (not digest or digest not in digests)):
                     rows.append({"queue_id": identity, "candidate": deepcopy(candidate),
                                  "status": "pending", "result": None})
                     known.add(identity)
+                    image_urls.add(candidate["source_image_url"])
+                    digests.add(digest)
                     added.append(identity)
             _write_records(self.path, rows)
             return added
