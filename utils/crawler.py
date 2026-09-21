@@ -103,7 +103,7 @@ def catalog_hashes(memes, *, image_dir=None):
 
 def crawl(seeds, memes, *, provider=None, max_pages=MAX_PAGES,
           images_per_page=MAX_IMAGES_PER_PAGE, max_images=MAX_IMAGES_PER_RUN,
-          delay=REQUEST_DELAY):
+          delay=REQUEST_DELAY, include_preview=False, max_robot_delay=None):
     """Return candidates/skipped/errors; caller owns review and later persistence.
 
     Only robots.txt and explicit pages/images are fetched. Robots failures deny
@@ -111,6 +111,8 @@ def crawl(seeds, memes, *, provider=None, max_pages=MAX_PAGES,
     """
     if min(max_pages, images_per_page, max_images) < 1 or delay < 0:
         raise ValueError("Crawler limits must be positive and delay nonnegative.")
+    if max_robot_delay is not None and max_robot_delay < delay:
+        raise ValueError("Robot delay budget must be at least the request delay.")
     report = {"candidates": [], "skipped": [], "errors": []}
     hashes, exact = catalog_hashes(memes)
     robots, pages, seen_images = {}, set(), set()
@@ -129,8 +131,12 @@ def crawl(seeds, memes, *, provider=None, max_pages=MAX_PAGES,
         if not rules.can_fetch(USER_AGENT, url):
             return False
         rate = rules.request_rate(USER_AGENT)
-        sleep(max(delay, rules.crawl_delay(USER_AGENT) or 0,
-                  rate.seconds / rate.requests if rate and rate.requests else 0))
+        wait = max(delay, rules.crawl_delay(USER_AGENT) or 0,
+                   rate.seconds / rate.requests if rate and rate.requests else 0)
+        # Interactive callers skip slow sites rather than violate robots delays.
+        if max_robot_delay is not None and wait > max_robot_delay:
+            return False
+        sleep(wait)
         return True
 
     for seed in seeds:
@@ -188,6 +194,8 @@ def crawl(seeds, memes, *, provider=None, max_pages=MAX_PAGES,
                                   "source_page": page, "source_image_url": url,
                                   "duplicate_status": "not_detected", "analysis_notice": notice,
                                   "content_sha256": digest, "image_hash": fingerprint})
+                if include_preview:
+                    candidate["_web_preview"] = upload.preview
                 report["candidates"].append(candidate)
                 exact[digest] = candidate["id"]
                 if informative(upload.image):
