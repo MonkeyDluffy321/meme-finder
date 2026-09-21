@@ -1,0 +1,10 @@
+[
+  {
+    "name": "Business Cat",
+    "aliases": ["business-cat", "black cat in tie", "office cat"],
+    "provider": "imgflip-page",
+    "template_id": "61531",
+    "image_url": "https://imgflip.com/s/meme/Business-Cat.jpg",
+    "source_page": "https://imgflip.com/memetemplate/Business-Cat"
+  }
+]

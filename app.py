@@ -8,7 +8,8 @@ from pathlib import Path
 import streamlit as st
 
 from utils.filters import filter_memes, filter_options
-from utils.images import load_preview, load_local_preview
+from utils.images import load_preview, load_local_preview, load_external_preview
+from utils.external_index import search_external_templates
 from utils.search import normalize_query, search_memes
 from utils.web_search import search_web
 from utils.account_ui import render_account
@@ -187,6 +188,9 @@ if categories or emotions:
 
 search_query = normalize_query(query)
 search_results = search_memes(memes, search_query)
+if (not search_results and search_query.strip()
+        and st.session_state.get("library_view", "home") == "home"):
+    search_results = search_external_templates(search_query)
 web_query = search_query.strip()
 if st.session_state.get("live_web_search", {}).get("query") != web_query:
     st.session_state.live_web_search = {"query": web_query, "results": None}
@@ -260,7 +264,9 @@ with st.container(key="results"):
             with column:
                 with st.container(key="card-" + meme["id"]):
                     with st.container(key="preview-" + meme["id"]):
-                        if meme.get("web_result"):
+                        if meme.get("external_result"):
+                            preview = load_external_preview(meme.get("image_url"))
+                        elif meme.get("web_result"):
                             # Never refetch an untrusted URL through the catalog preview loader.
                             preview = meme.get("_web_preview")
                         elif meme.get("local_image"):
@@ -278,8 +284,9 @@ with st.container(key="results"):
                                 st.caption("Preview unavailable")
 
                     st.subheader(meme["name"])
-                    if meme.get("web_result"):
-                        st.caption("Temporary web result · Not in the catalog")
+                    if meme.get("web_result") or meme.get("external_result"):
+                        st.caption(("External template · " + meme["provider"] + " · Not curated")
+                                   if meme.get("external_result") else "Temporary web result · Not in the catalog")
                         if meme.get("source_page"):
                             st.link_button("Source page", meme["source_page"])
 
@@ -298,7 +305,7 @@ with st.container(key="results"):
                         '</div>'
                     )
 
-                    if not meme.get("web_result") and card_actions(meme, saved_ids):
+                    if not (meme.get("web_result") or meme.get("external_result")) and card_actions(meme, saved_ids):
                         st.caption(
                             "Categories: " +
                             ", ".join(meme.get("categories", []))
