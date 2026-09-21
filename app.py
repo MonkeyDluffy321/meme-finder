@@ -10,6 +10,7 @@ import streamlit as st
 from utils.filters import filter_memes, filter_options
 from utils.images import load_preview, load_local_preview
 from utils.search import normalize_query, search_memes
+from utils.web_search import search_web
 from utils.account_ui import render_account
 from utils.auth import current_account
 from utils.library import LibraryError, fetch_library, resolve_memes
@@ -186,6 +187,21 @@ if categories or emotions:
 
 search_query = normalize_query(query)
 search_results = search_memes(memes, search_query)
+web_query = search_query.strip()
+if st.session_state.get("live_web_search", {}).get("query") != web_query:
+    st.session_state.live_web_search = {"query": web_query, "results": None}
+web_cache = st.session_state.live_web_search
+if (st.session_state.get("library_view", "home") == "home"
+        and web_query and not search_results):
+    st.caption("No local match. Search approved webpages for temporary results.")
+    if st.button("Search web", key="search_web", disabled=web_cache["results"] is not None):
+        if web_cache["results"] is None:
+            with st.spinner("Searching approved webpages…"):
+                web_cache["results"] = search_web(memes, web_query)
+    if web_cache["results"] is not None:
+        search_results = web_cache["results"]
+        if not search_results:
+            st.info("No matching web results available from approved sources.")
 results = filter_memes(search_results, categories, emotions)
 account = current_account(st.session_state)
 view = st.session_state.get("library_view", "home")
@@ -244,7 +260,10 @@ with st.container(key="results"):
             with column:
                 with st.container(key="card-" + meme["id"]):
                     with st.container(key="preview-" + meme["id"]):
-                        if meme.get("local_image"):
+                        if meme.get("web_result"):
+                            # Never refetch an untrusted URL through the catalog preview loader.
+                            preview = meme.get("_web_preview")
+                        elif meme.get("local_image"):
                             preview = load_local_preview(meme.get("local_image"))
                         else:
                             preview = load_preview(meme.get("image_url"))
@@ -259,6 +278,10 @@ with st.container(key="results"):
                                 st.caption("Preview unavailable")
 
                     st.subheader(meme["name"])
+                    if meme.get("web_result"):
+                        st.caption("Temporary web result · Not in the catalog")
+                        if meme.get("source_page"):
+                            st.link_button("Source page", meme["source_page"])
 
                     with st.container(key="meaning-" + meme["id"]):
                         st.write(meme["meaning"])
@@ -275,7 +298,7 @@ with st.container(key="results"):
                         '</div>'
                     )
 
-                    if card_actions(meme, saved_ids):
+                    if not meme.get("web_result") and card_actions(meme, saved_ids):
                         st.caption(
                             "Categories: " +
                             ", ".join(meme.get("categories", []))

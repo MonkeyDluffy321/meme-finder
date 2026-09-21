@@ -144,3 +144,20 @@ class PipelineTests(unittest.TestCase):
         report = crawl(["https://example.com"], [], delay=0)
         self.assertFalse(report["candidates"])
         self.assertEqual(len(report["errors"]), 2)
+
+    def test_live_preview_is_opt_in_and_validated(self):
+        from utils.uploads import validate_upload
+        default = crawl(["https://example.com"], [], delay=0)
+        self.assertNotIn("_web_preview", default["candidates"][0])
+        live = crawl(["https://example.com"], [], delay=0, include_preview=True)
+        self.assertEqual(live["candidates"][0]["_web_preview"], validate_upload(self.image).preview)
+
+    def test_live_robot_delay_budget_skips_instead_of_shortening_wait(self):
+        self.rules = b"User-agent: *\nAllow: /\nCrawl-delay: 60\n"
+        report = crawl(["https://example.com"], [], delay=.5, max_robot_delay=2)
+        self.assertFalse(report["candidates"])
+        self.assertTrue(report["skipped"])
+        self.image_mock.assert_not_called()
+        self.sleep.assert_called_once_with(.5)
+        self.rules = b"User-agent: *\nAllow: /\nRequest-rate: 1/60\n"
+        self.assertFalse(crawl(["https://example.com"], [], delay=.5, max_robot_delay=2)["candidates"])
