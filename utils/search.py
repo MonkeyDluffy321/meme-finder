@@ -33,6 +33,9 @@ LIST_FIELDS = {"aliases", "keywords", "situations", "emotions", "categories"}
 FUZZY_CUTOFF = 85
 SOLO_FUZZY_CUTOFF = 90
 MIN_COVERAGE = 0.6
+# A secondary needs at least 75% of the leader's weighted relevance unless
+# identity or complete explicit query evidence independently protects it.
+SECONDARY_SCORE_RATIO = 0.75
 NUMBER_WORDS = (
     "zero", "one", "two", "three", "four", "five", "six", "seven", "eight",
     "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen",
@@ -151,6 +154,7 @@ def search_memes(memes, query, *, use_semantic=True, require_strong=False):
     runner_up = ordered_scores[1] if len(ordered_scores) > 1 else 0
     ranked = []
     protected = set()
+    precision_protected = set()
     strong_match = False
     for index, (meme, record_items) in enumerate(zip(memes, items)):
         best_scores = dict.fromkeys(sorted(evidence_words), 0.0)
@@ -214,6 +218,8 @@ def search_memes(memes, query, *, use_semantic=True, require_strong=False):
         strong_exact = exact_coverage >= MIN_COVERAGE and (
             phrase_bonus > 0 or coherent >= MIN_COVERAGE)
         tier = 3 if complete_name else 2 if strong_exact else 1
+        if complete_name or recovered_name or short_support == evidence_words:
+            precision_protected.add(id(meme))
         strong_match |= (tier >= 2 or recovered_name
                          or (short_query and short_support == evidence_words))
         score = (sum(best_scores.values()) * (1 + 0.25 * coherent) + phrase_bonus) * coverage
@@ -229,8 +235,24 @@ def search_memes(memes, query, *, use_semantic=True, require_strong=False):
         if (use_semantic and semantic.descriptive_query(query)
                 and any(tier == 1 and id(meme) not in protected for tier, _, meme in ranked)):
             ranked = _hybrid_rank(memes, query, ranked, protected)
+        if require_strong and len(evidence_words) > 1:
+            ranked = _precise_results(ranked, precision_protected)
         return [meme for tier, score, meme in ranked]
     return semantic_fallback(memes, query) if use_semantic else []
+
+
+def _precise_results(ranked, protected):
+    """Trim clearly weaker lexical tails, never decide whether a tier qualifies.
+
+    Semantic-only recovery (tier 0) already passed its independent similarity
+    threshold and margin; its cosine score is not comparable to lexical scores.
+    """
+    leader_tier, leader_score, _ = ranked[0]
+    if leader_tier < 2:
+        return ranked
+    return [item for position, item in enumerate(ranked)
+            if position == 0 or item[0] == 0 or id(item[2]) in protected
+            or item[1] >= leader_score * SECONDARY_SCORE_RATIO]
 
 
 def _hybrid_rank(memes, query, ranked, protected):
