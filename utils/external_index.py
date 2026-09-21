@@ -37,7 +37,7 @@ def public_metadata_url(value):
         return url if "." in host else None
 
 
-def normalize_record(row):
+def normalize_record(row, *, include_provenance=True):
     if not isinstance(row, dict):
         return None
     fields = ("name", "provider", "template_id")
@@ -59,12 +59,27 @@ def normalize_record(row):
         alias = " ".join(alias.split())
         unique.setdefault(alias.casefold(), alias)
     result.update(aliases=list(unique.values()), image_url=image, source_page=source)
+    if include_provenance:
+        fields = ("provider", "template_id", "image_url", "source_page")
+        provenance = [{key: result[key] for key in fields}]
+        extras = row.get("provenance", [])
+        if isinstance(extras, list):
+            for extra in extras[:32]:
+                if not isinstance(extra, dict):
+                    continue
+                reference = normalize_record({**extra, "name": result["name"], "aliases": []},
+                                             include_provenance=False)
+                if reference:
+                    reference = {key: reference[key] for key in fields}
+                    if reference not in provenance:
+                        provenance.append(reference)
+        result["provenance"] = provenance[:32]
     return result
 
 
 def clean_records(rows):
-    """Skip malformed rows; merge duplicate IDs/images while preserving aliases."""
-    result, identities, images = [], {}, {}
+    """Merge IDs, images, or equal names on the same specific source page."""
+    result, identities, images, sources = [], {}, {}, {}
     for raw in rows:
         row = normalize_record(raw)
         if row is None:
@@ -73,14 +88,29 @@ def clean_records(rows):
         existing = identities.get(key)
         if existing is None:
             existing = images.get(row["image_url"])
+        source = urlsplit(row["source_page"] or "")
+        source_key = (tuple(normalized_words(row["name"])), source.netloc,
+                      source.path.rstrip("/"), source.query)
+        specific_source = bool(source.path.strip("/") and source_key[0])
+        if existing is None and specific_source:
+            existing = sources.get(source_key)
         if existing is not None:
-            merged = dict.fromkeys(existing["aliases"] + [row["name"]] + row["aliases"])
-            existing["aliases"] = list(merged)[:32]
-            identities[key] = existing
-            images[row["image_url"]] = existing
-            continue
-        identities[key] = images[row["image_url"]] = row
-        result.append(row)
+            merged = {}
+            for alias in existing["aliases"] + [row["name"]] + row["aliases"]:
+                merged.setdefault(alias.casefold(), alias)
+            existing["aliases"] = list(merged.values())[:32]
+            for reference in row["provenance"]:
+                if reference not in existing["provenance"]:
+                    existing["provenance"].append(reference)
+            existing["provenance"] = existing["provenance"][:32]
+        else:
+            existing = row
+            result.append(row)
+        for reference in row["provenance"]:
+            identities[(reference["provider"], reference["template_id"])] = existing
+            images[reference["image_url"]] = existing
+        if specific_source:
+            sources[source_key] = existing
     return result
 
 
