@@ -4,6 +4,8 @@ from copy import deepcopy
 from hashlib import sha256
 import json
 from pathlib import Path
+import re
+from urllib.parse import urlsplit
 
 from utils.catalog_sources import DEFAULT_CONFIG, validate_config
 from utils.crawler import crawl, normalize_url, REQUEST_DELAY
@@ -15,6 +17,38 @@ MAX_PAGES = 2
 IMAGES_PER_PAGE = 2
 MAX_IMAGES = 4
 MAX_ROBOT_DELAY = 2
+MEMEGEN_NAMES = {
+    "doge": ("Doge",),
+    "drake": ("Drake Hotline Bling",),
+    "fry": ("Futurama Fry", "Not Sure If"),
+    "success": ("Success Kid",),
+}
+
+
+def enrich_web_identity(candidate):
+    """Copy a temporary candidate; infer identity only from a known template URL.
+
+    Ignore query strings, arbitrary page titles/filenames and lookalike hosts.
+    This parses existing metadata only: no requests or catalog updates.
+    """
+    result = deepcopy(candidate)
+    url = normalize_url(candidate.get("source_image_url"))
+    if not url:
+        return result
+    parsed = urlsplit(url)
+    if parsed.netloc != "api.memegen.link":
+        return result
+    match = re.fullmatch(r"/images/([a-z0-9][a-z0-9_-]{0,63})\.(?:jpg|jpeg|png|webp)", parsed.path)
+    if not match or not any(char.isalpha() for char in match[1]):
+        return result
+    slug = match[1]
+    spaced = re.sub(r"[-_]+", " ", slug).strip()
+    names = MEMEGEN_NAMES.get(slug, (spaced.title(),))
+    name = result.get("name") or ""
+    if not name.strip() or name.lower().startswith("untitled meme") or name == "Untitled web meme":
+        result["name"] = names[0]
+    result["aliases"] = list(dict.fromkeys([*result.get("aliases", []), slug, spaced, *names]))
+    return result
 
 
 def search_web(memes, query, *, config_path=DEFAULT_CONFIG, provider=None):
@@ -72,7 +106,7 @@ def search_web(memes, query, *, config_path=DEFAULT_CONFIG, provider=None):
                 continue
             seen_urls.add(url)
             seen_hashes.add(digest)
-            result = deepcopy(candidate)
+            result = enrich_web_identity(candidate)
             result.update(web_result=True, id="web-" + sha256(url.encode()).hexdigest())
             result["image_url"] = result.get("image_url") or url
             result["name"] = result.get("name") or "Untitled web meme"

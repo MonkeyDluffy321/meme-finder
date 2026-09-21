@@ -6,7 +6,7 @@ import unittest
 from unittest.mock import call, patch
 
 from utils.search import search_memes
-from utils.web_search import search_web
+from utils.web_search import enrich_web_identity, search_web
 
 
 class WebSearchTests(unittest.TestCase):
@@ -33,6 +33,62 @@ class WebSearchTests(unittest.TestCase):
 
     def write_config(self):
         self.path.write_text(json.dumps(self.config), encoding="utf-8")
+
+    def test_memegen_identity_enrichment_and_short_query_ranking(self):
+        for slug, name in (("doge", "Doge"), ("drake", "Drake Hotline Bling"),
+                           ("fry", "Futurama Fry"), ("success", "Success Kid")):
+            with self.subTest(slug=slug):
+                self.candidate.update(name="Untitled meme abc", aliases=[],
+                    source_image_url=f"https://api.memegen.link/images/{slug}.jpg?width=300")
+                before = deepcopy(self.candidate)
+                self.assertEqual(search_memes([self.candidate], slug, use_semantic=False), [])
+                results = self.search(slug)
+                self.assertEqual(len(results), 1)
+                self.assertEqual(results[0]["name"], name)
+                self.assertIn(slug, results[0]["aliases"])
+                self.assertTrue(results[0]["web_result"])
+                for field in ("source_page", "source_image_url", "meaning", "keywords"):
+                    self.assertEqual(results[0][field], before[field])
+                self.assertEqual(self.candidate, before)
+
+    def test_humanized_slug_and_curated_alternate_alias(self):
+        for slug in ("business-cat", "business_cat"):
+            candidate = {**self.candidate, "name": "", "aliases": ["Existing"],
+                         "source_image_url": f"https://api.memegen.link/images/{slug}.png"}
+            enriched = enrich_web_identity(candidate)
+            self.assertEqual(enriched["name"], "Business Cat")
+            self.assertIn(slug, enriched["aliases"])
+            self.assertIn("business cat", enriched["aliases"])
+            self.assertIn("Existing", enriched["aliases"])
+            self.assertEqual(enrich_web_identity(enriched), enriched)
+        fry = enrich_web_identity({"source_image_url": "https://api.memegen.link/images/fry.webp"})
+        self.assertIn("Not Sure If", fry["aliases"])
+        self.assertEqual(search_memes([fry], "not sure if", use_semantic=False), [fry])
+
+    def test_existing_meaningful_name_and_aliases_preserved(self):
+        candidate = {**self.candidate, "aliases": ["Original"],
+                     "source_image_url": "https://api.memegen.link/images/doge.jpg"}
+        before = deepcopy(candidate)
+        enriched = enrich_web_identity(candidate)
+        self.assertEqual(enriched["name"], candidate["name"])
+        self.assertIn("Original", enriched["aliases"])
+        self.assertIn("doge", enriched["aliases"])
+        self.assertEqual(candidate, before)
+        self.assertIsNot(enriched["aliases"], candidate["aliases"])
+
+    def test_unrecoverable_or_untrusted_urls_preserve_behavior(self):
+        for url in (None, "https://oldmeme.example/doge.jpg", "file:///images/doge.jpg",
+                    "https://api.memegen.link.evil.example/images/doge.jpg",
+                    "https://api.memegen.link@evil.example/images/doge.jpg",
+                    "https://user@api.memegen.link/images/doge.jpg",
+                    "https://api.memegen.link/images/123.jpg",
+                    "https://api.memegen.link/images/doge/caption.jpg",
+                    "https://api.memegen.link/images/%64oge.jpg",
+                    "https://api.memegen.link/images/doge.svg",
+                    "https://api.memegen.link/gallery?image=/images/doge.jpg"):
+            with self.subTest(url=url):
+                candidate = {**self.candidate, "source_image_url": url}
+                self.assertEqual(enrich_web_identity(candidate), candidate)
 
     def search(self, query="work", memes=None):
         return search_web(memes or [], query, config_path=self.path)
