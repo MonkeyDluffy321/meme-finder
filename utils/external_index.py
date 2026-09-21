@@ -11,11 +11,32 @@ from urllib.parse import urlsplit
 from utils.crawler import normalize_url
 from utils.importer_url import _safe_public_ip
 from utils.search import normalized_words, search_memes
+from utils import semantic
 
 
 INDEX_PATH = Path(__file__).resolve().parents[1] / "data" / "external_templates.json"
 MAX_RECORDS = 10000
 MAX_INDEX_BYTES = 8 * 1024 * 1024
+
+
+def searchable_metadata(row):
+    """Bound optional provider text; malformed fields cannot poison a record."""
+    result = {}
+    for field in ("meaning", "description"):
+        value = row.get(field)
+        if isinstance(value, str) and value.strip() and len(value) <= 2000:
+            result[field] = " ".join(value.split())
+    for field in ("keywords", "situations"):
+        values = row.get(field)
+        if isinstance(values, list):
+            unique = {}
+            for value in values[:64]:
+                if isinstance(value, str) and value.strip() and len(value) <= 200:
+                    value = " ".join(value.split())
+                    unique.setdefault(value.casefold(), value)
+            if unique:
+                result[field] = list(unique.values())[:32]
+    return result
 
 
 def public_metadata_url(value):
@@ -59,6 +80,7 @@ def normalize_record(row, *, include_provenance=True):
         alias = " ".join(alias.split())
         unique.setdefault(alias.casefold(), alias)
     result.update(aliases=list(unique.values()), image_url=image, source_page=source)
+    result.update(searchable_metadata(row))
     if include_provenance:
         fields = ("provider", "template_id", "image_url", "source_page")
         provenance = [{key: result[key] for key in fields}]
@@ -99,6 +121,12 @@ def clean_records(rows):
             for alias in existing["aliases"] + [row["name"]] + row["aliases"]:
                 merged.setdefault(alias.casefold(), alias)
             existing["aliases"] = list(merged.values())[:32]
+            for field in ("keywords", "situations"):
+                combined = existing.get(field, []) + row.get(field, [])
+                existing.update(searchable_metadata({field: combined}))
+            for field in ("meaning", "description"):
+                if row.get(field) and not existing.get(field):
+                    existing[field] = row[field]
             for reference in row["provenance"]:
                 if reference not in existing["provenance"]:
                     existing["provenance"].append(reference)
@@ -132,7 +160,9 @@ def _load(path, modified, size):
     exact = {}
     for row in records:
         identity = sha256(json.dumps([row["provider"], row["template_id"]]).encode()).hexdigest()
-        row.update(id="external-" + identity, external_result=True, meaning="", description="")
+        row.update(id="external-" + identity, external_result=True)
+        row.setdefault("meaning", "")
+        row.setdefault("description", "")
         for label in (row["name"], *row["aliases"]):
             key = tuple(normalized_words(label))
             bucket = exact.setdefault(key, [])
@@ -142,7 +172,7 @@ def _load(path, modified, size):
 
 
 def search_external_templates(query, *, index_path=INDEX_PATH):
-    """No network/writes. Reuse V1 lexical/fuzzy ranking for identity metadata."""
+    """Strict lexical first, then confident descriptive semantic recovery."""
     if not query.strip():
         return []
     try:
@@ -150,6 +180,9 @@ def search_external_templates(query, *, index_path=INDEX_PATH):
         stat = path.stat()
         records, exact = _load(str(path), stat.st_mtime_ns, stat.st_size)
         pool = exact.get(tuple(normalized_words(query)), records)
-        return deepcopy(search_memes(pool, query, use_semantic=False, require_strong=True))
+        results = search_memes(pool, query, use_semantic=False, require_strong=True)
+        if not results and len(normalized_words(query)) >= 4:
+            results = semantic.semantic_fallback(records, query, min_content_words=2)
+        return deepcopy(results)
     except (OSError, ValueError, TypeError):
         return []

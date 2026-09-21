@@ -1,6 +1,7 @@
 """Offline provider adapters. No search APIs or network calls."""
 
 from utils.web_search import MEMEGEN_NAMES
+from utils.external_index import searchable_metadata
 
 
 def memegen_records(rows):
@@ -20,7 +21,8 @@ def memegen_records(rows):
         yield {"name": row.get("name"), "aliases": [*aliases, slug,
                slug.replace("-", " ").replace("_", " "), *MEMEGEN_NAMES.get(slug, ())],
                "provider": "memegen", "template_id": slug,
-               "image_url": row.get("blank"), "source_page": row.get("source") or row.get("_self")}
+               "image_url": row.get("blank"), "source_page": row.get("source") or row.get("_self"),
+               **searchable_metadata(row)}
 
 
 def json_records(rows):

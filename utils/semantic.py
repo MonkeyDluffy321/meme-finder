@@ -139,23 +139,27 @@ def semantic_scores(memes, query):
     )
 
 
-def descriptive_query(query):
-    """Require at least four distinct non-filler words before embedding."""
-    return len(set(re.findall(r"\w+", query.lower())) - _QUERY_FILLER) >= 4
+def descriptive_query(query, *, min_content_words=4):
+    """Gate embeddings by distinct non-filler words (four by default)."""
+    return len(set(re.findall(r"\w+", query.lower())) - _QUERY_FILLER) >= min_content_words
 
 
-def semantic_fallback(memes, query):
+def semantic_fallback(memes, query, *, min_content_words=4):
     """Conservative Tier 4: return one confident, unambiguous match or abstain.
 
-    Thresholds calibrated on the current dataset and unchanged text builder.
-    Short queries stay lexical-only. Never called to rerank lexical results.
+    Short queries stay lexical-only by default. The external index additionally
+    gates total query length before requesting a lower content-word minimum.
+    Never called to rerank lexical results; confidence thresholds stay unchanged.
     """
-    if not memes or not descriptive_query(query):
+    if not memes or not descriptive_query(query, min_content_words=min_content_words):
         return []
     try:
         scores = semantic_scores(memes, query)
-        if not scores or any(not math.isfinite(score) for _, score in scores):
+        identities = {id(meme) for meme in memes}
+        if not scores or any(id(meme) not in identities or not math.isfinite(score)
+                             or not -1 <= score <= 1 for meme, score in scores):
             return []
+        scores = sorted(scores, key=lambda item: item[1], reverse=True)
         best, score = scores[0]
         runner_up = scores[1][1] if len(scores) > 1 else 0.0
         if score >= SEMANTIC_THRESHOLD and score - runner_up >= SEMANTIC_MARGIN:

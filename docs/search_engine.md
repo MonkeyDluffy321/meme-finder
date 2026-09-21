@@ -14,10 +14,27 @@ templates (base catalog plus approved imports) are not replaced or modified.
    currently have no category/emotion annotations, so active filters exclude them.
 
 External-index search is offline: no query is sent to a provider. Exact normalized
-name/alias lookups use an in-memory map. Other queries reuse V1's lexical/fuzzy
-ranker with semantics disabled for this name-only metadata. Case, phrase and
+name/alias lookups use an in-memory map. Other queries first reuse V1's strict
+lexical/fuzzy ranker against names, aliases and descriptive metadata. Case, phrase and
 number normalization come from V1. A bounded cache reloads on file mtime/size
 changes, and callers receive copies. Blank browsing remains local-only.
+
+When strict external lexical search abstains, queries with at least four total
+words and two distinct non-filler words may use the existing BGE semantic scorer.
+This supports short descriptions such as "cat at office desk" without enabling
+semantic expansion for short identity searches such as "men in black". Recovery
+returns at most one result at the existing similarity threshold **0.64** and
+runner-up margin **0.025**. Weak, ambiguous, nonfinite, out-of-range or foreign
+results abstain; model failure also leaves the explicit web fallback available.
+Strong lexical results never trigger this semantic fallback. Curated routing
+and its strict confidence gate remain unchanged.
+
+The same `semantic_scores()` implementation, BGE model, document-embedding cache
+and query cache serve both catalogs. The complete stable external document set
+is embedded once per content version; subsequent queries reuse its vectors.
+Model initialization/first embedding can be slow; no provider receives queries,
+and no additional model or API dependency is introduced. A first model load may
+download the model through the existing FastEmbed loader if it is not cached.
 
 Both local and external tiers request `require_strong=True` from V1. Acceptance
 requires an existing exact-name/alias tier, the existing strong exact-context
@@ -68,6 +85,11 @@ characters, aliases at 32, URLs at 2,048 characters. The file is capped at 8 MiB
 and 10,000 records. Import provenance retains the last 20 import summaries.
 Each record also retains up to 32 validated `provenance` references containing
 provider, template ID, image URL and source page, including merged providers.
+Optional `description` and `meaning` fields accept up to 2,000 characters each;
+`keywords` and `situations` accept up to 32 unique items of 200 characters each.
+Malformed optional values are discarded independently of valid identity data.
+These fields participate in existing lexical and semantic text construction;
+image URLs, provider IDs and provenance are not embedding text.
 
 Malformed rows are skipped; broken/missing/unsupported/oversized index files
 yield no external results. URL validation rejects unsupported schemes,
@@ -104,6 +126,15 @@ templates are hard-coded. Examples include Absolute Cinema and additional
 modern formats. It's A Trap remains searchable (it was already in the Memegen
 snapshot as `ackbar`). Image URLs point to revision-pinned public repository
 assets, avoiding dependence on the provider's hosted rendering API.
+
+Both provider adapters now retain descriptive text, keywords and situations when
+available. Duplicate merges combine list metadata and fill missing prose fields.
+At import time, an unambiguous exact normalized external name matching an existing
+curated name/alias can reuse its descriptions and keywords. This is a generic
+identity join, not a per-meme mapping; it never copies library/local-image flags,
+changes curated data, or changes an external record's status. Humanized slugs
+remain the existing safe derived aliases. Captions and missing visual details
+are not invented. The refreshed index still contains 712 external templates.
 
 Save an updated provider export locally, then run from the repository root:
 
@@ -180,9 +211,27 @@ catalog and Streamlit regressions remain part of the full suite.
 Repository tests additionally cover pinned URLs, malformed/oversized/unsafe YAML,
 missing images, read failures, repeat imports, cross-provider provenance and
 expanded shipped coverage. No network is required by these tests.
+External semantic tests mock scoring/embeddings and cover descriptive recovery,
+unchanged exact/short searches, weak/ambiguous score rejection, model failures,
+metadata validation/merging, exact catalog joins, cache reuse and copy isolation.
+
+An offline check using the cached BGE model returned:
+
+| Query | First external result |
+| --- | --- |
+| guy looking at another girl | Distracted Boyfriend |
+| man sweating choosing buttons | Two Buttons |
+| cat at office desk | Business Cat |
+| surprised man looking shocked | Abstains: Surprised Joey 0.6984 vs Thousand Yard Stare 0.6861 |
+
+The last query fails the unchanged 0.025 separation requirement. Chocolate-cake,
+Paris-weather and purple-dinosaur/tax queries also abstained in this check.
+These examples are diagnostics, not a comprehensive relevance benchmark.
 
 ```powershell
-python -m unittest discover -s tests -p 'test_external_index*.py' -q
+python -m unittest discover -s tests -p 'test_external*.py' -q
+python -m unittest discover -s tests -p 'test_search*.py' -q
+python -m unittest discover -s tests -p 'test_semantic.py' -q
 python -m unittest discover -s tests -q
 ```
 
@@ -197,6 +246,10 @@ source page may collapse; different names/sources can still hide visual duplicat
 Upstream image rights and availability are not implied by metadata inclusion.
 Lookup uses an exact-name map followed by a bounded
 linear V1 scan; the JSON backend targets thousands, not millions, of records.
+Provider descriptions remain sparse: keywords and names cannot reliably describe
+every visual scene. Conservative semantic ambiguity rejection deliberately leaves
+some relevant broad descriptions to web fallback. No automated visual captioning
+or inference of missing template-specific facts was added.
 
 The live crawler still has its existing total budget of 2 pages/4 images, normally
 split as 1 page/2 images per approved source. No crawler expansion was used here.

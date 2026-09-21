@@ -6,9 +6,46 @@ import json
 from pathlib import Path
 
 from utils.external_index import (INDEX_PATH, MAX_INDEX_BYTES, MAX_RECORDS,
-                                  clean_records, read_index)
+                                  clean_records, read_index, searchable_metadata)
+from utils.search import normalized_words
 from utils.external_providers import PROVIDERS
 from utils.importer import DATA_DIR, _write_records
+
+
+def enrich_catalog_metadata(records):
+    """Reuse descriptions only for unambiguous exact identities; never promote rows."""
+    identities = {}
+    for filename in ("memes.json", "imported_memes.json"):
+        try:
+            with (DATA_DIR / filename).open("rb") as handle:
+                raw = handle.read(MAX_INDEX_BYTES + 1)
+            if len(raw) > MAX_INDEX_BYTES:
+                continue
+            catalog = json.loads(raw)
+        except (OSError, ValueError):
+            continue
+        if not isinstance(catalog, list):
+            continue
+        for row in catalog[:MAX_RECORDS]:
+            if not isinstance(row, dict):
+                continue
+            aliases = row.get("aliases", [])
+            for label in [row.get("name"), *(aliases if isinstance(aliases, list) else [])]:
+                if isinstance(label, str):
+                    key = tuple(normalized_words(label))
+                    if key:
+                        identities.setdefault(key, {})[id(row)] = row
+    for record in records:
+        matches = identities.get(tuple(normalized_words(record["name"])), {})
+        if len(matches) == 1:
+            metadata = searchable_metadata(next(iter(matches.values())))
+            for field in ("keywords", "situations"):
+                if field in metadata:
+                    combined = record.get(field, []) + metadata[field]
+                    record.update(searchable_metadata({field: combined}))
+            for field in ("meaning", "description"):
+                if metadata.get(field) and not record.get(field):
+                    record[field] = metadata[field]
 
 
 def import_templates(input_path, *, provider, index_path=INDEX_PATH, source=None):
@@ -44,6 +81,7 @@ def import_templates(input_path, *, provider, index_path=INDEX_PATH, source=None
     retained = [row for row in previous_records
                 if (row["provider"], row["template_id"]) not in keys]
     records = clean_records([*retained, *incoming])
+    enrich_catalog_metadata(records)
     records.sort(key=lambda row: (row["provider"], row["template_id"]))
     if len(records) > MAX_RECORDS:
         raise ValueError("Combined index exceeds record limit.")
