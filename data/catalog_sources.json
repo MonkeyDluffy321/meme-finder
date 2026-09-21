@@ -1,4 +1,23 @@
 {
-  "limits": {"max_sources": 5, "max_pages": 3, "max_images": 20},
-  "sources": []
+  "limits": {
+    "max_sources": 5,
+    "max_pages": 3,
+    "max_images": 20
+  },
+  "sources": [
+    {
+      "name": "OldMeme",
+      "approved": true,
+      "seeds": [
+        "https://oldmeme.com/templates/"
+      ]
+    },
+    {
+      "name": "GenMyMeme",
+      "approved": true,
+      "seeds": [
+        "https://genmymeme.com/"
+      ]
+    }
+  ]
 }
