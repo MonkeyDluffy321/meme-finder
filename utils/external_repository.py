@@ -8,7 +8,7 @@ from urllib.parse import quote
 
 import yaml  # Already required by RapidOCR and huggingface_hub.
 
-from utils.external_index import MAX_RECORDS
+from utils.external_index import MAX_RECORDS, searchable_metadata
 
 
 REPOSITORY = "https://github.com/tenequm/memegen-rs"
@@ -61,5 +61,6 @@ def repository_records(directory):
         rows.append({"name": metadata.get("name"), "aliases": [*aliases, slug, slug.replace("-", " ")],
                      "provider": "memegen-repository", "template_id": slug,
                      "image_url": f"https://raw.githubusercontent.com/tenequm/memegen-rs/{revision}/{quote(image)}",
-                     "source_page": metadata.get("source") or f"{REPOSITORY}/tree/{revision}/templates/{slug}"})
+                     "source_page": metadata.get("source") or f"{REPOSITORY}/tree/{revision}/templates/{slug}",
+                     **searchable_metadata(metadata)})
     return rows
