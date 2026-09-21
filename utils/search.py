@@ -117,12 +117,14 @@ def name_similarity(query_words, name_words):
     return ratio(" ".join(query_words), " ".join(name_words), score_cutoff=82)
 
 
-def search_memes(memes, query, *, use_semantic=True):
+def search_memes(memes, query, *, use_semantic=True, require_strong=False):
     """Admit useful evidence, then rank complete names, exact context, and typos.
 
     IDF counts each record once. Equal ranks retain input order and results
     remain the original objects. Descriptive queries can boost weak lexical
     matches; exact tiers and recovered names retain their lexical ordering.
+    require_strong gates tier acceptance using existing lexical evidence;
+    semantic-only results cannot terminate a multi-source fallback search.
     """
     query = normalize_query(query)
     memes = list(memes)
@@ -149,6 +151,7 @@ def search_memes(memes, query, *, use_semantic=True):
     runner_up = ordered_scores[1] if len(ordered_scores) > 1 else 0
     ranked = []
     protected = set()
+    strong_match = False
     for index, (meme, record_items) in enumerate(zip(memes, items)):
         best_scores = dict.fromkeys(sorted(evidence_words), 0.0)
         similarities = dict.fromkeys(sorted(evidence_words), 0.0)
@@ -211,12 +214,16 @@ def search_memes(memes, query, *, use_semantic=True):
         strong_exact = exact_coverage >= MIN_COVERAGE and (
             phrase_bonus > 0 or coherent >= MIN_COVERAGE)
         tier = 3 if complete_name else 2 if strong_exact else 1
+        strong_match |= (tier >= 2 or recovered_name
+                         or (short_query and short_support == evidence_words))
         score = (sum(best_scores.values()) * (1 + 0.25 * coherent) + phrase_bonus) * coverage
         if recovered_name:
             score += FIELD_WEIGHTS["name"] * name_scores[index] / 100
             protected.add(id(meme))
         ranked.append((tier, score, meme))
 
+    if require_strong and not strong_match:
+        return []
     ranked.sort(key=lambda item: item[:2], reverse=True)
     if ranked:
         if (use_semantic and semantic.descriptive_query(query)

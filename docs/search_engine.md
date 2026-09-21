@@ -6,8 +6,8 @@ Phase 1 adds a separate external template metadata index. The existing 41 local
 templates (base catalog plus approved imports) are not replaced or modified.
 
 1. `app.py` runs existing V1 lexical/fuzzy/semantic search against the local catalog.
-2. Only when that returns no results, a nonblank Home query searches the external
-   index. A local match always wins, even if filters subsequently hide it.
+2. Only when no strong local evidence exists, a nonblank Home query searches the
+   external index. Strong local matches win even if filters subsequently hide them.
 3. If both tiers are empty, the existing explicit **Search web** action remains.
    Its session cache, query invalidation, source approval and bounded crawler are unchanged.
 4. Existing category/emotion filters apply after retrieval. External records
@@ -18,6 +18,15 @@ name/alias lookups use an in-memory map. Other queries reuse V1's lexical/fuzzy
 ranker with semantics disabled for this name-only metadata. Case, phrase and
 number normalization come from V1. A bounded cache reloads on file mtime/size
 changes, and callers receive copies. Blank browsing remains local-only.
+
+Both local and external tiers request `require_strong=True` from V1. Acceptance
+requires an existing exact-name/alias tier, the existing strong exact-context
+tier (60% exact coverage plus phrase/coherence), unambiguous recovered-name
+evidence (similarity at least 82, margin at least 5), or explicit short-query
+support for every useful token under the existing typo rules. Scattered weak
+lexical evidence and semantic-only matches cannot stop fallback. Semantics can
+still reorder results after strong lexical evidence qualifies a tier. The
+default `search_memes()` behavior remains available to existing non-routing callers.
 
 External records display **External template / provider / Not curated**, with
 source links and no Save/Recently Viewed actions. Images use the existing safe

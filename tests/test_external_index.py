@@ -54,7 +54,7 @@ class ExternalIndexTests(unittest.TestCase):
                 patch("utils.semantic.semantic_scores") as semantic, \
                 patch("utils.importer_url.download_resource") as download:
             self.assertTrue(self.search("Business Cat"))
-        self.assertEqual(rank.call_args.kwargs, {"use_semantic": False})
+        self.assertEqual(rank.call_args.kwargs, {"use_semantic": False, "require_strong": True})
         semantic.assert_not_called()
         download.assert_not_called()
 
