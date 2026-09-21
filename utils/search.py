@@ -2,11 +2,12 @@
 
 import re
 from collections import Counter
-from math import log
+from math import isfinite, log
 
 from rapidfuzz.fuzz import ratio
 
 from utils.semantic import semantic_fallback
+from utils import semantic
 
 
 # Ignore common words so descriptions focus on their useful terms.
@@ -120,7 +121,8 @@ def search_memes(memes, query, *, use_semantic=True):
     """Admit useful evidence, then rank complete names, exact context, and typos.
 
     IDF counts each record once. Equal ranks retain input order and results
-    remain the original objects. Semantic fallback runs only if none qualify.
+    remain the original objects. Descriptive queries can boost weak lexical
+    matches; exact tiers and recovered names retain their lexical ordering.
     """
     query = normalize_query(query)
     memes = list(memes)
@@ -146,6 +148,7 @@ def search_memes(memes, query, *, use_semantic=True):
     ordered_scores = sorted(name_scores, reverse=True)
     runner_up = ordered_scores[1] if len(ordered_scores) > 1 else 0
     ranked = []
+    protected = set()
     for index, (meme, record_items) in enumerate(zip(memes, items)):
         best_scores = dict.fromkeys(sorted(evidence_words), 0.0)
         similarities = dict.fromkeys(sorted(evidence_words), 0.0)
@@ -211,9 +214,50 @@ def search_memes(memes, query, *, use_semantic=True):
         score = (sum(best_scores.values()) * (1 + 0.25 * coherent) + phrase_bonus) * coverage
         if recovered_name:
             score += FIELD_WEIGHTS["name"] * name_scores[index] / 100
+            protected.add(id(meme))
         ranked.append((tier, score, meme))
 
     ranked.sort(key=lambda item: item[:2], reverse=True)
     if ranked:
+        if (use_semantic and semantic.descriptive_query(query)
+                and any(tier == 1 and id(meme) not in protected for tier, _, meme in ranked)):
+            ranked = _hybrid_rank(memes, query, ranked, protected)
         return [meme for tier, score, meme in ranked]
     return semantic_fallback(memes, query) if use_semantic else []
+
+
+def _hybrid_rank(memes, query, ranked, protected):
+    """Bound semantic boosts to 35% of the largest weak lexical score.
+
+    Preserve protected slots. Recover at most one unambiguous semantic-only
+    result after lexical results, using the existing fallback thresholds.
+    """
+    try:
+        scores = semantic.semantic_scores(memes, query)
+        identities = {id(meme) for meme in memes}
+        if not scores or any(id(meme) not in identities or not isfinite(score)
+                             or not -1 <= score <= 1 for meme, score in scores):
+            return ranked
+        similarities = {id(meme): score for meme, score in scores}
+        weak = [(tier, score, meme) for tier, score, meme in ranked
+                if tier == 1 and id(meme) not in protected]
+        scale = max(score for _, score, _ in weak)
+        boosted = []
+        for tier, score, meme in weak:
+            confidence = max(0, similarities.get(id(meme), 0) - semantic.SEMANTIC_THRESHOLD)
+            bonus = 0.35 * scale * confidence / (1 - semantic.SEMANTIC_THRESHOLD)
+            boosted.append((tier, score + bonus, meme))
+        positions = {id(meme): index for index, meme in reversed(list(enumerate(memes)))}
+        boosted.sort(key=lambda item: (-item[1], positions[id(item[2])]))
+        replacements = iter(boosted)
+        result = [next(replacements) if tier == 1 and id(meme) not in protected
+                  else (tier, score, meme) for tier, score, meme in ranked]
+        ordered = sorted(scores, key=lambda item: item[1], reverse=True)
+        best, score = ordered[0]
+        runner_up = ordered[1][1] if len(ordered) > 1 else 0
+        if (score >= semantic.SEMANTIC_THRESHOLD and score - runner_up >= semantic.SEMANTIC_MARGIN
+                and all(best is not meme for _, _, meme in ranked)):
+            result.append((0, score, best))
+        return result
+    except Exception:
+        return ranked

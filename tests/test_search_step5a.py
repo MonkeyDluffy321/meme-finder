@@ -1,6 +1,7 @@
 import json
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from utils.search import search_memes
 
@@ -9,6 +10,11 @@ DATA_PATH = Path(__file__).resolve().parents[1] / "data" / "memes.json"
 
 
 class Step5ASearchRegressionTests(unittest.TestCase):
+
+    def setUp(self):
+        scorer = patch("utils.semantic.semantic_scores", return_value=[])
+        scorer.start()
+        self.addCleanup(scorer.stop)
 
     @classmethod
     def setUpClass(cls):

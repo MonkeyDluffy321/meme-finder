@@ -139,14 +139,18 @@ def semantic_scores(memes, query):
     )
 
 
+def descriptive_query(query):
+    """Require at least four distinct non-filler words before embedding."""
+    return len(set(re.findall(r"\w+", query.lower())) - _QUERY_FILLER) >= 4
+
+
 def semantic_fallback(memes, query):
     """Conservative Tier 4: return one confident, unambiguous match or abstain.
 
     Thresholds calibrated on the current dataset and unchanged text builder.
     Short queries stay lexical-only. Never called to rerank lexical results.
     """
-    useful = set(re.findall(r"\w+", query.lower())) - _QUERY_FILLER
-    if not memes or len(useful) < 4:
+    if not memes or not descriptive_query(query):
         return []
     try:
         scores = semantic_scores(memes, query)
