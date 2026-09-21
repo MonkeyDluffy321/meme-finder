@@ -6,9 +6,21 @@ from urllib.request import Request, urlopen
 
 import streamlit as st
 
+from utils.importer_url import download_image
+from utils.uploads import validate_upload
+
 
 MAX_IMAGE_BYTES = 5 * 1024 * 1024
 IMPORTED_IMAGE_DIR = Path(__file__).resolve().parents[1] / "data" / "imported_images"
+
+
+@st.cache_data(ttl=300, max_entries=64, show_spinner=False)
+def load_external_preview(url):
+    """Untrusted external-index images use the existing safe transport/validator."""
+    try:
+        return validate_upload(download_image(url, respect_indexing=True)).preview
+    except (OSError, ValueError, HTTPException):
+        return None
 
 
 @st.cache_data(ttl=300, max_entries=64, show_spinner=False)
