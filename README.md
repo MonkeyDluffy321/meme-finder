@@ -252,6 +252,42 @@ the account and library features.
 
 ## Testing
 
+### Catalog expansion from approved webpages
+
+Maintain `data/catalog_sources.json`, then run `python -m utils.catalog_sources`
+(or supply `--config path/to/sources.json`). The initial source list is empty;
+add only webpages you have reviewed and approved for crawling:
+
+```json
+{
+  "limits": {"max_sources": 5, "max_pages": 3, "max_images": 20},
+  "sources": [
+    {"name": "source-a", "approved": true, "seeds": ["https://example.org/memes"]},
+    {"name": "source-b", "approved": false, "seeds": ["https://example.net/templates"]}
+  ]
+}
+```
+
+These example URLs are placeholders. Approval here permits discovery only.
+Candidates remain pending until manually approved through `admin_review.py`;
+search continues to use only the local catalog. No external meme-search API is used.
+
+Page and image budgets apply per source, with hard ceilings of 10 pages,
+100 image attempts and 10 sources; defaults bound a run to 15 pages and 100
+image attempts. Oversized configurations fail before crawling; split larger
+lists into separate configs. Unapproved sources are skipped. Only explicit
+seeds are visited, using the existing robots.txt and download/image protections.
+Duplicate normalized seeds are visited once per run; the durable review queue
+deduplicates image URLs and content hashes across sources and previous runs,
+including rejected candidates. Source failures do not stop subsequent sources.
+
+JSON output reports per-source and overall `pages_processed` (page attempts),
+`candidates_discovered` (crawler candidates before queue deduplication),
+`candidates_queued`, `skipped` (crawler skips, queue duplicates, unapproved or
+duplicate seeds), and `errors`. Unexpected source failures include an `error`
+message; interrupted indexing cannot report partial counts. Exit status is 1
+if errors occurred, otherwise 0. No candidates are automatically ingested.
+
 From the project root with the virtual environment activated, run:
 
 ```powershell

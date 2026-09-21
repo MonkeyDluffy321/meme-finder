@@ -1,0 +1,4 @@
+{
+  "limits": {"max_sources": 5, "max_pages": 3, "max_images": 20},
+  "sources": []
+}
