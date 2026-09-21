@@ -187,7 +187,7 @@ if categories or emotions:
               on_click=reset_filters, key="reset_filters")
 
 search_query = normalize_query(query)
-search_results = search_memes(memes, search_query)
+search_results = search_memes(memes, search_query, require_strong=True)
 if (not search_results and search_query.strip()
         and st.session_state.get("library_view", "home") == "home"):
     search_results = search_external_templates(search_query)

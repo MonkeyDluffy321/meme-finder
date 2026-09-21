@@ -120,6 +120,6 @@ def search_external_templates(query, *, index_path=INDEX_PATH):
         stat = path.stat()
         records, exact = _load(str(path), stat.st_mtime_ns, stat.st_size)
         pool = exact.get(tuple(normalized_words(query)), records)
-        return deepcopy(search_memes(pool, query, use_semantic=False))
+        return deepcopy(search_memes(pool, query, use_semantic=False, require_strong=True))
     except (OSError, ValueError, TypeError):
         return []
