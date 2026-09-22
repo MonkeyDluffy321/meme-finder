@@ -5,4 +5,3 @@ supabase==2.31.0
 Pillow>=12.1,<13
 rapidocr==3.9.2
 onnxruntime>=1.17,<2
-google-genai==2.23.0

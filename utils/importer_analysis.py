@@ -14,7 +14,8 @@ FIELDS = ("name", "meaning", *LIST_FIELDS)
 def suggest_metadata(content, memes, *, provider=None):
     """Return (metadata, notice) from image bytes and reference records.
 
-    Indexers can pass GeminiProvider(key_reader=...) to avoid UI-based secrets.
+    Indexers can optionally supply a generic explanation provider.
+    By default, suggestions use reliable local template metadata only.
     Invalid images raise UploadError. Analysis does not save or import records.
     """
     upload = validate_upload(content)
@@ -40,7 +41,7 @@ def suggest_metadata(content, memes, *, provider=None):
                                       if re.search(r"(?<!\w)" + re.escape(tag.lower()) + r"(?!\w)", evidence)][:6]
         notice = "Metadata suggestions generated."
     elif matched:
-        notice = "Used reliable template metadata; cloud analysis was unavailable."
+        notice = "Used reliable template metadata; image explanation was unavailable."
     else:
         return {}, vision.message or "Analysis unavailable."
     return suggestions, notice

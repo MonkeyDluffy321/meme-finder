@@ -33,9 +33,9 @@ class CreatorAppTests(unittest.TestCase):
         self.download = patch("utils.creator_ui.st.download_button", wraps=st.download_button).start()
         self.render = patch("utils.creator_ui.render_draft", wraps=render_draft).start()
         self.guards = [patch(target, side_effect=AssertionError("Unexpected external side effect")).start()
-                       for target in ("utils.intelligence_ui.analyze", "utils.intelligence_ui.explain_upload",
-                                      "utils.ocr.extract_text", "utils.vision.GeminiProvider.explain",
-                                      "utils.vision.read_api_key", "utils.template_index.prepare_index",
+                       for target in ("utils.intelligence_ui.analyze", "utils.intelligence.explain_upload",
+                                      "utils.ocr.extract_text",
+                                      "utils.template_index.prepare_index",
                                       "utils.library_ui.record_view", "utils.library_ui.save_meme",
                                       "utils.library_ui.unsave_meme")]
         self.addCleanup(patch.stopall)
@@ -61,7 +61,7 @@ class CreatorAppTests(unittest.TestCase):
         self.assertEqual(app.session_state["library_view"], "recent")
         self.assertEqual(app.title[0].value, "Create a meme")
         self.assertFalse(any("sign in" in item.value for item in app.info))
-        self.assertFalse(any(e.label == "Explain a Meme" for e in app.expander))
+        self.assertFalse(any(e.label == "Analyze a Meme" for e in app.expander))
         app.button(key="creator_back").click().run()
         self.assertFalse(app.session_state["creator_active"])
         self.assertIn("Recently Viewed", [item.value for item in app.subheader])
@@ -265,7 +265,7 @@ class CreatorAppTests(unittest.TestCase):
         app.button(key="home").click().run()
         self.assertEqual(app.session_state["query"], "")
         self.assertEqual(app.session_state["page"], 0)
-        self.assertTrue(any(e.label == "Explain a Meme" for e in app.expander))
+        self.assertTrue(any(e.label == "Analyze a Meme" for e in app.expander))
 
     def test_signed_in_creator_makes_no_discovery_ai_or_database_calls(self):
         state, client, query = make_state()
