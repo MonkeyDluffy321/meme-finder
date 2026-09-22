@@ -1,6 +1,115 @@
-# Meme Finder V3
+# Meme Finder
 
-Meme Finder V3 is a Python and Streamlit app for finding meme templates by
+## Search Engine V4 foundation (V4.1–V4.6)
+
+V4 is designed to search both **meme templates** and **recurring/known finished
+memes**, not every meme ever posted online. V4.1 adds the finished-meme data
+layer; V4.2 adds retrieval. V4.3 runs both engines independently for one Home query
+through `utils/search_all.py`, displaying Finished Memes first and Templates second.
+Empty groups are hidden. Both ranking engines and existing template cards remain
+unchanged; category/emotion filters apply only to templates. Finished memes need
+no template identity and do not appear in the account libraries.
+
+`data/meme_instances.json` is a separate versioned index, initially empty.
+`utils/meme_index.py` validates and normalizes provider-independent records:
+`meme_id`, `provider`, `caption_text`, derived `normalized_caption`, optional
+`template_id`/`template_name`, `topics`, `situation`, `language`, `image_url`,
+`source_page` and `source_confidence`. A known template is never required.
+V4.5 adds `utils.meme_ingestion.ingest_memes(provider_or_providers)`: adapters
+implement the existing `MemeProvider.records()` interface and may expose `name`
+as their default provider. The offline pipeline maps `id`/`external_id`,
+`text`/`caption`, `tags`, and `description` into the existing schema, validates
+each record, applies V4 duplicate rules, and atomically updates the index.
+Use `index_path=...` for a separate fixture index. The returned summary includes
+received, accepted, invalid, duplicates, added, index size, errors, and write status.
+Malformed records and failed providers do not stop other providers.
+
+Normalized source records remain on disk so deduplicated search results retain
+all provenance and caption variants across imports. External IDs become `meme_id`;
+missing IDs are derived deterministically. Optional local `image_bytes` produce
+validated fingerprints; provider hash claims are ignored. Unknown fields such as
+popularity are not indexed. No image URLs are fetched. Repeated imports are
+deterministic and bounded by the existing 10,000-record / 8 MB index limits.
+Corrupt existing indexes and failed writes leave the previous file intact.
+An exclusive sibling `.lock` prevents concurrent ingestion writes; after a killed
+process, a stale lock must be removed manually. Persist source records, not collapsed
+search results.
+
+### V4.6 controlled real-source imports
+
+Incoming finished memes pass a shared, local caption quality gate before persistence.
+It conservatively skips empty/effectively empty captions, extreme repetition,
+severe encoding corruption, malformed text, obvious placeholders/link-only content,
+and explicit adult-content phrases. Reports include `quality_skipped` (a subset
+of `invalid`) and `skip_reasons`: `empty_caption`, `repetitive_spam`, `garbled_text`,
+`unsafe_adult_content`, `malformed_caption`, and `low_information`.
+**Profanity alone is not filtered.** Short captions, slang, dark humor, emoji,
+non-English text, and unknown templates remain eligible. Accepted records carry
+optional `contains_strong_language` metadata, retained across loads/duplicates;
+search does not require or rank by it. Captions and provenance are preserved.
+These deterministic heuristics inspect text only; adult phrase/strong-language
+recognition is primarily English and cannot guarantee image or contextual safety.
+Existing catalogs/previews are not retroactively cleaned; use a fresh output index
+to review a newly filtered import.
+
+Available finished-meme provider: **GenMyMeme** (`genmymeme`), using its public
+[`/api/v1/gallery`](https://genmymeme.com/api/v1/gallery) response. The adapter
+reuses approval from `data/catalog_sources.json` and passes records into V4.5.
+It extracts caption layers, image URLs, external IDs, source pages, and optional
+template/tags/description/language metadata. Source confidence is `reported`;
+popularity counters are not indexed or used for ranking.
+
+```powershell
+# Controlled local preview index (at most 20 candidates):
+.\.venv\Scripts\python.exe -m utils.meme_sources --provider genmymeme --limit 20 --index tmp/finished-meme-preview.json
+# Add at most 50 candidates to the reusable application index:
+.\.venv\Scripts\python.exe -m utils.meme_sources --provider genmymeme --limit 50
+```
+
+The JSON summary reports provider, received, accepted, invalid, duplicates, errors,
+and index size. `--limit` is 1–50 per provider, including invalid/duplicate candidates.
+One bounded gallery response is fetched; no pagination, images, login, or automatic
+search-time requests. The shared safe HTTP helper pins public IPs, uses
+`MemeFinder/1.0`, a five-second timeout, and a 1 MB response ceiling. Every run
+checks robots.txt; missing/denied policies fail closed. Requests wait at least one
+second and honor robots crawl-delay/request-rate up to five seconds; slower sites
+are skipped. HTTP errors (including 403/429), redirects, indexing prohibitions,
+and challenges are not retried or bypassed. Existing V4.5 locks, atomic writes,
+record/byte limits, and duplicate rules remain in force.
+
+This is a small community-gallery sample, not a comprehensive or curated recurring
+meme dataset. URLs can expire; API shape can change; captions reflect submitted
+text layers rather than OCR. Language defaults to `und` when absent. No image
+fingerprints are available in this metadata-only mode, so cross-URL visual copies
+may remain. Unknown templates are allowed. OldMeme has no finished-meme adapter
+in this step. **V4.7 handles query-driven live discovery.**
+
+`utils.meme_search.search_finished_memes(query, index_path=..., limit=20)` returns
+ranked finished records. Exact captions lead, followed by query-token coverage and
+weighted captions, topics, situations and optional template context. Source confidence
+breaks relevance ties; soft copies receive a small demotion but remain eligible.
+Empty or insufficiently matching queries return no results. Ranking is deterministic,
+local and lexical: it loads no semantic models, makes no network calls, and does not
+infer paraphrases without shared words in the indexed metadata.
+
+Local ingestion can compute image fingerprints from validated bytes. Exact image
+or decoded-pixel copies collapse with source provenance and caption variants.
+Identical URL/caption records also collapse. Matching perceptual hashes with the
+same caption only flag possible copies, retaining both records; compressed/resized
+variants are not aggressively removed. Different captions and meaningful variations
+remain separate. Hashes and source-confidence claims require trusted ingestion;
+URL syntax validation does not authorize downloading or approve a source.
+
+Results expose **Finished Memes**, then **Templates**, as separate groups. Finished
+cards show previews, captions, provider and optional template name. V4.4 adds
+**Download** for finished memes and **Download** / **Create Meme** for templates.
+Downloads reuse displayed image bytes without another network request. Create Meme
+opens the existing Creator with the selected template as a fresh draft. Save and
+details remain available. Unavailable images disable image actions without hiding
+results. Tests use small synthetic
+records with placeholder URLs, not a production collection.
+
+Meme Finder is a Python and Streamlit app for finding meme templates by
 name, description, emotion, or situation. The current collection contains
 **40 meme templates**, with searchable metadata and remote image previews.
 Browse and search as a guest, or sign in to keep a personal meme library.
