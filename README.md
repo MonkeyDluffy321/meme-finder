@@ -1,6 +1,6 @@
 # Meme Finder
 
-## Search Engine V4 foundation (V4.1–V4.4)
+## Search Engine V4 foundation (V4.1–V4.5)
 
 V4 is designed to search both **meme templates** and **recurring/known finished
 memes**, not every meme ever posted online. V4.1 adds the finished-meme data
@@ -15,8 +15,26 @@ no template identity and do not appear in the account libraries.
 `meme_id`, `provider`, `caption_text`, derived `normalized_caption`, optional
 `template_id`/`template_name`, `topics`, `situation`, `language`, `image_url`,
 `source_page` and `source_confidence`. A known template is never required.
-Provider adapters can implement `MemeProvider.records()` for approved sources;
-there is no crawler or provider integration yet.
+V4.5 adds `utils.meme_ingestion.ingest_memes(provider_or_providers)`: adapters
+implement the existing `MemeProvider.records()` interface and may expose `name`
+as their default provider. The offline pipeline maps `id`/`external_id`,
+`text`/`caption`, `tags`, and `description` into the existing schema, validates
+each record, applies V4 duplicate rules, and atomically updates the index.
+Use `index_path=...` for a separate fixture index. The returned summary includes
+received, accepted, invalid, duplicates, added, index size, errors, and write status.
+Malformed records and failed providers do not stop other providers.
+
+Normalized source records remain on disk so deduplicated search results retain
+all provenance and caption variants across imports. External IDs become `meme_id`;
+missing IDs are derived deterministically. Optional local `image_bytes` produce
+validated fingerprints; provider hash claims are ignored. Unknown fields such as
+popularity are not indexed. No image URLs are fetched. Repeated imports are
+deterministic and bounded by the existing 10,000-record / 8 MB index limits.
+Corrupt existing indexes and failed writes leave the previous file intact.
+An exclusive sibling `.lock` prevents concurrent ingestion writes; after a killed
+process, a stale lock must be removed manually. Persist source records, not collapsed
+search results. **Real source adapters come in V4.6**; no crawling or live discovery
+is included here.
 
 `utils.meme_search.search_finished_memes(query, index_path=..., limit=20)` returns
 ranked finished records. Exact captions lead, followed by query-token coverage and
