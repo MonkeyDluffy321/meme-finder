@@ -1,6 +1,33 @@
-# Meme Finder V3
+# Meme Finder
 
-Meme Finder V3 is a Python and Streamlit app for finding meme templates by
+## Search Engine V4 foundation (V4.1)
+
+V4 is designed to search both **meme templates** and **recurring/known finished
+memes**, not every meme ever posted online. V4.1 adds only the finished-meme data
+layer; the existing V3 template search and UI remain unchanged.
+
+`data/meme_instances.json` is a separate versioned index, initially empty.
+`utils/meme_index.py` validates and normalizes provider-independent records:
+`meme_id`, `provider`, `caption_text`, derived `normalized_caption`, optional
+`template_id`/`template_name`, `topics`, `situation`, `language`, `image_url`,
+`source_page` and `source_confidence`. A known template is never required.
+Provider adapters can implement `MemeProvider.records()` for approved sources;
+there is no crawler, provider integration or finished-meme ranking yet.
+
+Local ingestion can compute image fingerprints from validated bytes. Exact image
+or decoded-pixel copies collapse with source provenance and caption variants.
+Identical URL/caption records also collapse. Matching perceptual hashes with the
+same caption only flag possible copies, retaining both records; compressed/resized
+variants are not aggressively removed. Different captions and meaningful variations
+remain separate. Hashes and source-confidence claims require trusted ingestion;
+URL syntax validation does not authorize downloading or approve a source.
+
+Future query results can expose **Finished Memes**, then **Templates**, as separate
+groups. Planned actions are Download for finished memes and Download/Create Meme
+for templates. V4.1 implements none of these UI controls. Tests use small synthetic
+records with placeholder URLs, not a production collection.
+
+Meme Finder is a Python and Streamlit app for finding meme templates by
 name, description, emotion, or situation. The current collection contains
 **40 meme templates**, with searchable metadata and remote image previews.
 Browse and search as a guest, or sign in to keep a personal meme library.
