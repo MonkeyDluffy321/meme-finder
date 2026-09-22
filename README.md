@@ -1,10 +1,10 @@
 # Meme Finder
 
-## Search Engine V4 foundation (V4.1)
+## Search Engine V4 foundation (V4.1–V4.2)
 
 V4 is designed to search both **meme templates** and **recurring/known finished
-memes**, not every meme ever posted online. V4.1 adds only the finished-meme data
-layer; the existing V3 template search and UI remain unchanged.
+memes**, not every meme ever posted online. V4.1 adds the finished-meme data
+layer; V4.2 adds retrieval. Existing V3 template search and UI remain unchanged.
 
 `data/meme_instances.json` is a separate versioned index, initially empty.
 `utils/meme_index.py` validates and normalizes provider-independent records:
@@ -12,7 +12,15 @@ layer; the existing V3 template search and UI remain unchanged.
 `template_id`/`template_name`, `topics`, `situation`, `language`, `image_url`,
 `source_page` and `source_confidence`. A known template is never required.
 Provider adapters can implement `MemeProvider.records()` for approved sources;
-there is no crawler, provider integration or finished-meme ranking yet.
+there is no crawler or provider integration yet.
+
+`utils.meme_search.search_finished_memes(query, index_path=..., limit=20)` returns
+ranked finished records. Exact captions lead, followed by query-token coverage and
+weighted captions, topics, situations and optional template context. Source confidence
+breaks relevance ties; soft copies receive a small demotion but remain eligible.
+Empty or insufficiently matching queries return no results. Ranking is deterministic,
+local and lexical: it loads no semantic models, makes no network calls, and does not
+infer paraphrases without shared words in the indexed metadata.
 
 Local ingestion can compute image fingerprints from validated bytes. Exact image
 or decoded-pixel copies collapse with source provenance and caption variants.
