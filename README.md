@@ -1,10 +1,14 @@
 # Meme Finder
 
-## Search Engine V4 foundation (V4.1–V4.2)
+## Search Engine V4 foundation (V4.1–V4.3)
 
 V4 is designed to search both **meme templates** and **recurring/known finished
 memes**, not every meme ever posted online. V4.1 adds the finished-meme data
-layer; V4.2 adds retrieval. Existing V3 template search and UI remain unchanged.
+layer; V4.2 adds retrieval. V4.3 runs both engines independently for one Home query
+through `utils/search_all.py`, displaying Finished Memes first and Templates second.
+Empty groups are hidden. Both ranking engines and existing template cards remain
+unchanged; category/emotion filters apply only to templates. Finished memes need
+no template identity and do not appear in the account libraries.
 
 `data/meme_instances.json` is a separate versioned index, initially empty.
 `utils/meme_index.py` validates and normalizes provider-independent records:
@@ -30,9 +34,10 @@ variants are not aggressively removed. Different captions and meaningful variati
 remain separate. Hashes and source-confidence claims require trusted ingestion;
 URL syntax validation does not authorize downloading or approve a source.
 
-Future query results can expose **Finished Memes**, then **Templates**, as separate
-groups. Planned actions are Download for finished memes and Download/Create Meme
-for templates. V4.1 implements none of these UI controls. Tests use small synthetic
+Results expose **Finished Memes**, then **Templates**, as separate groups. Finished
+cards show previews, captions, provider and optional template name. Planned actions
+are Download for finished memes and Download/Create Meme for templates; V4.3 adds
+none of those buttons. Tests use small synthetic
 records with placeholder URLs, not a production collection.
 
 Meme Finder is a Python and Streamlit app for finding meme templates by
