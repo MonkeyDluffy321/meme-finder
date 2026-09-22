@@ -20,6 +20,15 @@ def record(**changes):
 
 
 class MemeIndexTests(unittest.TestCase):
+    def test_duplicate_strong_language_flag_preserves_true_in_either_order(self):
+        for flags in ((False, True), (True, False)):
+            with self.subTest(flags=flags):
+                rows = clean_records([record(provider="first", contains_strong_language=flags[0]),
+                                      record(provider="second", contains_strong_language=flags[1])])
+                self.assertEqual(len(rows), 1)
+                self.assertIs(rows[0]["contains_strong_language"], True)
+                self.assertEqual(len(rows[0]["provenance"]), 2)
+
     def test_valid_record_and_no_template_required(self):
         row = normalize_record(record())
         self.assertEqual(row["kind"], "finished_meme")

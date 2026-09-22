@@ -13,6 +13,7 @@ import os
 from pathlib import Path
 
 from utils.importer import _write_records
+from utils.meme_quality import caption_quality
 from utils.meme_index import (INDEX_PATH, MAX_INDEX_BYTES, MAX_RECORDS, MemeProvider,
                               clean_records, image_fingerprints, normalize_record)
 
@@ -103,12 +104,20 @@ def ingest_memes(providers: MemeProvider | Iterable[MemeProvider], *, index_path
     if callable(getattr(providers, "records", None)):
         providers = [providers]
     summary = dict(received=0, accepted=0, invalid=0, duplicates=0, added=0,
-                   index_size=0, errors=[], written=False)
+                   index_size=0, errors=[], written=False, quality_skipped=0, skip_reasons={})
     incoming = []
     for position, provider in enumerate(providers):
         try:
             for raw in islice(provider.records(), MAX_RECORDS - summary["received"]):
                 summary["received"] += 1
+                # Check source caption before normalization strips controls/whitespace.
+                caption = next((raw[key] for key in ("caption_text", "caption", "text") if key in raw), "") if isinstance(raw, Mapping) else None
+                reason, strong = caption_quality(caption)
+                if isinstance(raw, Mapping) and reason:
+                    summary["invalid"] += 1
+                    summary["quality_skipped"] += 1
+                    summary["skip_reasons"][reason] = summary["skip_reasons"].get(reason, 0) + 1
+                    continue
                 try:
                     row = normalize_provider_record(raw, getattr(provider, "name", None))
                 except Exception:
@@ -117,6 +126,8 @@ def ingest_memes(providers: MemeProvider | Iterable[MemeProvider], *, index_path
                 if row is None:
                     summary["invalid"] += 1
                 else:
+                    if isinstance(strong, bool):
+                        row["contains_strong_language"] = strong
                     incoming.append(row)
                     summary["accepted"] += 1
             # Conservatively report hitting the bound, without consuming more.

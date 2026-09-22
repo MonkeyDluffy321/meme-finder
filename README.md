@@ -1,6 +1,6 @@
 # Meme Finder
 
-## Search Engine V4 foundation (V4.1–V4.5)
+## Search Engine V4 foundation (V4.1–V4.6)
 
 V4 is designed to search both **meme templates** and **recurring/known finished
 memes**, not every meme ever posted online. V4.1 adds the finished-meme data
@@ -33,8 +33,56 @@ deterministic and bounded by the existing 10,000-record / 8 MB index limits.
 Corrupt existing indexes and failed writes leave the previous file intact.
 An exclusive sibling `.lock` prevents concurrent ingestion writes; after a killed
 process, a stale lock must be removed manually. Persist source records, not collapsed
-search results. **Real source adapters come in V4.6**; no crawling or live discovery
-is included here.
+search results.
+
+### V4.6 controlled real-source imports
+
+Incoming finished memes pass a shared, local caption quality gate before persistence.
+It conservatively skips empty/effectively empty captions, extreme repetition,
+severe encoding corruption, malformed text, obvious placeholders/link-only content,
+and explicit adult-content phrases. Reports include `quality_skipped` (a subset
+of `invalid`) and `skip_reasons`: `empty_caption`, `repetitive_spam`, `garbled_text`,
+`unsafe_adult_content`, `malformed_caption`, and `low_information`.
+**Profanity alone is not filtered.** Short captions, slang, dark humor, emoji,
+non-English text, and unknown templates remain eligible. Accepted records carry
+optional `contains_strong_language` metadata, retained across loads/duplicates;
+search does not require or rank by it. Captions and provenance are preserved.
+These deterministic heuristics inspect text only; adult phrase/strong-language
+recognition is primarily English and cannot guarantee image or contextual safety.
+Existing catalogs/previews are not retroactively cleaned; use a fresh output index
+to review a newly filtered import.
+
+Available finished-meme provider: **GenMyMeme** (`genmymeme`), using its public
+[`/api/v1/gallery`](https://genmymeme.com/api/v1/gallery) response. The adapter
+reuses approval from `data/catalog_sources.json` and passes records into V4.5.
+It extracts caption layers, image URLs, external IDs, source pages, and optional
+template/tags/description/language metadata. Source confidence is `reported`;
+popularity counters are not indexed or used for ranking.
+
+```powershell
+# Controlled local preview index (at most 20 candidates):
+.\.venv\Scripts\python.exe -m utils.meme_sources --provider genmymeme --limit 20 --index tmp/finished-meme-preview.json
+# Add at most 50 candidates to the reusable application index:
+.\.venv\Scripts\python.exe -m utils.meme_sources --provider genmymeme --limit 50
+```
+
+The JSON summary reports provider, received, accepted, invalid, duplicates, errors,
+and index size. `--limit` is 1–50 per provider, including invalid/duplicate candidates.
+One bounded gallery response is fetched; no pagination, images, login, or automatic
+search-time requests. The shared safe HTTP helper pins public IPs, uses
+`MemeFinder/1.0`, a five-second timeout, and a 1 MB response ceiling. Every run
+checks robots.txt; missing/denied policies fail closed. Requests wait at least one
+second and honor robots crawl-delay/request-rate up to five seconds; slower sites
+are skipped. HTTP errors (including 403/429), redirects, indexing prohibitions,
+and challenges are not retried or bypassed. Existing V4.5 locks, atomic writes,
+record/byte limits, and duplicate rules remain in force.
+
+This is a small community-gallery sample, not a comprehensive or curated recurring
+meme dataset. URLs can expire; API shape can change; captions reflect submitted
+text layers rather than OCR. Language defaults to `und` when absent. No image
+fingerprints are available in this metadata-only mode, so cross-URL visual copies
+may remain. Unknown templates are allowed. OldMeme has no finished-meme adapter
+in this step. **V4.7 handles query-driven live discovery.**
 
 `utils.meme_search.search_finished_memes(query, index_path=..., limit=20)` returns
 ranked finished records. Exact captions lead, followed by query-token coverage and

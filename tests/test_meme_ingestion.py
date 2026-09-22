@@ -1,4 +1,5 @@
 from io import BytesIO
+import json
 from pathlib import Path
 import tempfile
 import unittest
@@ -64,6 +65,23 @@ class IngestionTests(unittest.TestCase):
         self.assertTrue(report["written"])
         self.assertEqual(search_finished_memes("Weekend waffles", index_path=self.path)[0]["meme_id"], "12")
         self.network.assert_not_called()
+
+    def test_strong_language_boolean_is_persisted_and_loaded(self):
+        rows = [record(id="strong", text="Shit happens"),
+                record(id="normal", text="Weekend waffles")]
+        report = self.ingest(FixtureProvider(rows=rows))
+        self.assertEqual(report["accepted"], 2)
+        for records in (json.loads(self.path.read_text(encoding="utf-8"))["records"], load_index(self.path)):
+            indexed = {row["meme_id"]: row for row in records}
+            self.assertIs(indexed["strong"]["contains_strong_language"], True)
+            self.assertIs(indexed["normal"]["contains_strong_language"], False)
+            self.assertEqual(indexed["strong"]["caption_text"], "Shit happens")
+
+    def test_nonboolean_quality_flag_is_not_assigned(self):
+        with patch("utils.meme_ingestion.caption_quality", return_value=(None, None)):
+            report = self.ingest(FixtureProvider())
+        self.assertEqual(report["accepted"], 1)
+        self.assertNotIn("contains_strong_language", json.loads(self.path.read_text(encoding="utf-8"))["records"][0])
 
     def test_multiple_providers_provenance_and_exact_duplicates_survive_reload(self):
         data = image_bytes("red")

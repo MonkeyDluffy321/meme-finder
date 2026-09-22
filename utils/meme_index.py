@@ -82,6 +82,8 @@ def normalize_record(raw):
     if confidence not in ("unknown", "reported", "verified"):
         return None
     row["source_confidence"] = confidence
+    if type(raw.get("contains_strong_language")) is bool:
+        row["contains_strong_language"] = raw["contains_strong_language"]
     row["kind"] = "finished_meme"
     row["instance_key"] = sha256(json.dumps([row["provider"], row["meme_id"],
                                             row["image_url"], row["normalized_caption"]]).encode()).hexdigest()
@@ -109,6 +111,8 @@ def clean_records(records):
             keys.append(("locator", row["image_url"], row["normalized_caption"]))
         existing = next((exact[key] for key in keys if key in exact), None)
         if existing is not None:
+            if "contains_strong_language" in row:
+                existing["contains_strong_language"] = existing.get("contains_strong_language", False) or row["contains_strong_language"]
             if reference not in existing["provenance"]:
                 existing["provenance"].append(reference)
             # Retain alternate OCR/transcriptions rather than silently discarding them.
