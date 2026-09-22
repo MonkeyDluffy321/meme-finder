@@ -40,7 +40,7 @@ class IntelligenceAppTests(unittest.TestCase):
             app = AppTest.from_file(str(APP)).run()
             self.assertFalse(app.exception)
             self.assertIn("v3_validated", app.session_state)
-            self.assertFalse(any(button.key == "v3_explain" for button in app.button))
+            self.assertTrue(any(button.key == "v3_explain" for button in app.button))
             app.button(key="v3_analyze").click().run()
             self.assertFalse(app.exception)
             self.assertTrue(any("No reliable match" in m.value for m in app.caption))
@@ -63,6 +63,52 @@ class IntelligenceAppTests(unittest.TestCase):
             self.assertFalse(app.exception)
             self.assertTrue(app.error)
             self.analyze.assert_not_called()
+
+    def test_local_explanation_questions_edits_replacement_and_clear(self):
+        self.analyze.return_value["identification"] = Identification(
+            "likely", [{"id": "drake-hotline-bling"}])
+        self.analyze.return_value["ocr"] = OCRResult("ok", "raw caption")
+        buffer = BytesIO()
+        Image.new("RGB", (30, 30), "red").save(buffer, format="PNG")
+        with patch("utils.intelligence_ui.st.file_uploader", return_value=buffer) as uploader, \
+                patch("utils.library.record_view") as history, patch("utils.library.save_meme") as save:
+            app = AppTest.from_file(str(APP)).run()
+            self.assertNotIn("v3_explanation", app.session_state)
+            app.button(key="v3_analyze").click().run()
+            app.text_area(key="v3_text").set_value("corrected caption").run()
+            app.text_input(key="v3_question").set_value("When should I use this meme?").run()
+            app.button(key="v3_explain").click().run()
+            self.assertFalse(app.exception)
+            explanation = app.session_state["v3_explanation"].explanation
+            self.assertEqual(explanation.intent, "usage")
+            self.assertEqual(explanation.visible_text, "corrected caption")
+            self.assertTrue(any("Template: Drake" in t.value for t in app.text))
+            app.text_input(key="v3_question").set_value("Show similar memes").run()
+            self.assertNotIn("v3_explanation", app.session_state)
+            app.button(key="v3_explain").click().run()
+            self.assertEqual(app.session_state["v3_explanation"].explanation.intent, "similar")
+            app.text_area(key="v3_text").set_value("").run()
+            self.assertNotIn("v3_explanation", app.session_state)
+            app.button(key="v3_explain").click().run()
+            self.assertEqual(app.session_state["v3_explanation"].explanation.visible_text, "")
+            replacement = BytesIO()
+            Image.new("RGB", (30, 30), "blue").save(replacement, format="PNG")
+            uploader.return_value = replacement
+            app.run()
+            self.assertNotIn("v3_explanation", app.session_state)
+            app.button(key="v3_explain").click().run()
+            self.assertEqual(app.session_state["v3_explanation"].status, "abstained")
+            app.text_area(key="v3_text").set_value("Expectation: rest\nReality: answering work emails").run()
+            app.button(key="v3_explain").click().run()
+            self.assertFalse(app.exception)
+            self.assertEqual(app.session_state["v3_explanation"].status, "ok")
+            self.assertTrue(any("hoped-for outcome" in t.value for t in app.text))
+            uploader.return_value = None
+            app.button(key="v3_clear").click().run()
+            self.assertFalse(app.exception)
+            self.assertNotIn("v3_explanation", app.session_state)
+            history.assert_not_called()
+            save.assert_not_called()
 
     def test_logout_clears_upload_state(self):
         state = {"v3_result": object(), "v3_upload_0": object(), "query": "cat"}

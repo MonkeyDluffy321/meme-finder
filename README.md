@@ -5,10 +5,12 @@ name, description, emotion, or situation. The current collection contains
 **40 meme templates**, with searchable metadata and remote image previews.
 Browse and search as a guest, or sign in to keep a personal meme library.
 
-The external Gemini explainer was removed. A new local **Meme Explainer** is
-planned separately. Local OCR, upload normalization, template identification,
-metadata and related meme retrieval remain available. Search Engine V3,
-accounts, libraries and the creator/editor retain their existing behavior.
+The external Gemini explainer was removed. The **local Meme Explainer foundation**
+explains finished memes using corrected captions first, then OCR, optional
+reliable template metadata and local search to give grounded,
+rule-based answers without external AI APIs, keys or network model calls.
+Search Engine V3, accounts, libraries and the creator/editor retain their
+existing behavior.
 
 ## Local image analysis setup and use
 
@@ -23,9 +25,19 @@ On Home, expand **Analyze a Meme**:
 3. Click **Read text locally** to run OCR and local template identification.
    OCR downloads its small models on first use, then reuses the local cache.
 4. Optionally correct the visible text and review **Template context**.
-5. Use **Related memes** to find templates using the visible/corrected text.
-6. Use **Clear image** to discard the upload and its results. Replacing the
-   upload clears prior analysis; editing text clears related search results.
+5. Click **Explain meme** for a local explanation. Optionally ask about meaning,
+   why it works, when to use it, the caption, or similar memes. This uses the
+   analysis already available; run **Read text locally** first or supply a caption.
+   Template identification is optional and does not gate caption explanations.
+   Corrected text, including an intentionally empty correction, takes precedence.
+6. Use **Related memes** to find templates using the visible/corrected text.
+7. Use **Clear image** to discard the upload and its results. Replacing the
+   upload clears prior analysis; editing text or the question clears the explanation.
+
+The explainer itself loads no models and performs no network requests. OCR and
+optional reference/model preparation still need their initial setup described below;
+prepare these assets before offline use. Existing remote previews and account
+features retain their own connectivity requirements.
 
 ### Local processing and template context
 
@@ -41,8 +53,8 @@ are downloaded by the matcher during normal UI use. Prepare references with
 `python -m utils.template_index --hash-only` (omit `--hash-only` to prepare
 optional CLIP embeddings).
 
-Reliable matches show collection metadata, not an interpretation of the exact
-uploaded joke. Unknown or weak matches remain uncertain. Missing references
+Reliable matches provide secondary context for interpreting the uploaded caption.
+Unknown or weak matches still allow supported text-level readings. Missing references
 or image embeddings do not block OCR or related caption search. Metadata
 importers reuse reliable local template metadata by default; the generic
 explanation/result interface remains available for explicitly supplied providers.
@@ -61,8 +73,16 @@ retains its existing semantic fallback.
 - Matching thresholds are conservative heuristics, not calibrated certainty.
 - OCR can miss small, stylized or obscured text. English is the primary tested
   use case; recognition quality in other languages is not guaranteed.
-- General visual explanations and cultural or historical verification are
-  unavailable. The planned local Meme Explainer is a separate feature.
+- This is a deterministic caption-first V1, not general visual intelligence or a chatbot.
+  It recognizes expectation/reality, me/also-me, contrast and situation captions,
+  plus basic literal statements. It explains supported contrasts without forcing humor.
+  Reliable template conventions can help explain the caption/reaction pairing.
+  Other wording may receive a limited reading; slang, origins and cultural context
+  are not guessed. Full abstention requires insufficient caption and reliable context.
+  Unknown/uncertain
+  templates are not named by the explainer; OCR is quoted and search matches are
+  labeled as suggestions, never proof of identity. Questions use basic keyword
+  intents rather than open-ended language understanding.
 
 ## Current features
 
@@ -118,6 +138,7 @@ utils/explanations.py   Grounded metadata and related-template retrieval
 utils/intelligence.py   Analysis orchestration and partial failure handling
 utils/intelligence_ui.py Session-local Home upload interface
 utils/vision.py         Generic explanation/result classes and provider interface
+utils/local_explainer.py Grounded local explanations and basic question intents
 tests/                  unittest regression and Streamlit app tests
 requirements.txt        App dependencies and local OCR
 .streamlit/secrets.toml Local Supabase configuration (ignored; never commit)
