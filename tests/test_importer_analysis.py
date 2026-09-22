@@ -27,10 +27,24 @@ class MetadataAnalysisTests(unittest.TestCase):
         provider = Mock()
         provider.explain.return_value = self.vision
         with patch("utils.importer_analysis.analyze", return_value=self.local), \
-                patch("utils.vision.read_api_key", side_effect=AssertionError("UI secrets accessed")):
+                patch("streamlit.secrets", new_callable=Mock) as secrets:
             suggestions, _ = suggest_metadata(self.content, [self.meme], provider=provider)
+        self.assertEqual(secrets.mock_calls, [])
         provider.explain.assert_called_once()
         self.assertEqual(suggestions["meaning"], "Feeling joy at work")
+
+    def test_default_analysis_preserves_local_metadata(self):
+        with patch("utils.importer_analysis.analyze", return_value=self.local):
+            suggestions, notice = suggest_metadata(self.content, [self.meme])
+        self.assertEqual(suggestions, {field: self.meme.get(field, "") for field in FIELDS})
+        self.assertIn("template metadata", notice)
+
+    def test_default_unknown_image_has_no_generated_metadata(self):
+        self.local["identification"] = Identification("unknown")
+        with patch("utils.importer_analysis.analyze", return_value=self.local):
+            suggestions, notice = suggest_metadata(self.content, [self.meme])
+        self.assertEqual(suggestions, {})
+        self.assertIn("unavailable", notice)
 
     def test_provider_failure_preserves_reference_metadata(self):
         from copy import deepcopy

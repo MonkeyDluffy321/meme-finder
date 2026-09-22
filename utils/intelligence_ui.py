@@ -1,11 +1,11 @@
-"""Explanation-first interface. Only the Explain button invokes a cloud provider."""
+"""Local OCR, template metadata and related meme interface."""
 
 from hashlib import sha256
 from io import BytesIO
 import streamlit as st
 
 from utils.uploads import validate_upload, UploadError
-from utils.intelligence import analyze, explain_upload, reliable_template
+from utils.intelligence import analyze, reliable_template
 from utils.explanations import explain, related_memes
 from utils.identification import Identification
 from utils.ocr import OCRResult
@@ -22,7 +22,7 @@ def clear_image():
 
 
 def discard_related():
-    # A changed caption invalidates both outputs; it never triggers a request.
+    # A changed caption invalidates prior results.
     st.session_state.pop("v3_related", None)
     st.session_state.pop("v3_explanation", None)
 
@@ -37,8 +37,8 @@ def render_metadata(matched):
 
 
 def render_intelligence(memes):
-    with st.expander("Explain a Meme", expanded=False):
-        st.caption("Understand what an image expresses, how its joke or reaction works, and what may need more context.")
+    with st.expander("Analyze a Meme", expanded=False):
+        st.caption("Read visible text, identify local templates and find related memes. A local Meme Explainer is planned separately.")
         generation = st.session_state.get("v3_generation", 0)
         uploaded = st.file_uploader("Meme image", type=["jpg", "jpeg", "png", "webp"],
                                     key=f"v3_upload_{generation}")
@@ -62,7 +62,7 @@ def render_intelligence(memes):
             st.caption("Choose a different JPEG, PNG or static WebP image.")
             return
         st.image(BytesIO(upload.preview), width=500)
-        st.caption("Preview and OCR run locally on this app's server. No image is sent to Gemini until you click Explain this meme.")
+        st.caption("Preview and OCR run locally on this app's server.")
         if st.button("Read text locally", key="v3_analyze"):
             with st.spinner("Reading visible text locally…"):
                 result = analyze(upload, memes)
@@ -72,58 +72,28 @@ def render_intelligence(memes):
         result = st.session_state.get("v3_result", {
             "ocr": OCRResult("not_run"), "identification": Identification("unavailable"), "notices": []})
         st.markdown("**Visible text**")
-        messages = {"not_run": "Read text locally above, or type it below. You can also explain the image without OCR.",
+        messages = {"not_run": "Read text locally above, or type it below.",
                     "empty": "No readable text detected. You can type a caption below.",
-                    "unavailable": "OCR unavailable. You can still request a visual explanation or type the caption.",
-                    "failed": "Text extraction failed. Visual explanation is still available.",
+                    "unavailable": "OCR unavailable. You can still type the caption to find related memes.",
+                    "failed": "Text extraction failed. You can still type the caption.",
                     "uncertain": "Some detected text may be inaccurate. Please check it."}
         if result["ocr"].status in messages:
             st.caption(messages[result["ocr"].status])
         st.session_state.setdefault("v3_text", result["ocr"].text)
         st.text_area("Check or correct the visible text (optional)", key="v3_text", max_chars=5000,
                      on_change=discard_related)
-        st.info("Pressing Explain this meme sends the normalized image, visible/corrected text, and any reliable template hint to Google Gemini. Google processes this content under its API terms; free-tier content may be used to improve its products. The app does not save your image or explanation to disk or Supabase.")
-        if st.button("Explain this meme", key="v3_explain", type="primary"):
-            with st.spinner("Explaining with Gemini…"):
-                st.session_state.v3_explanation = explain_upload(
-                    upload, result, memes, st.session_state.v3_text)
-        vision = st.session_state.get("v3_explanation")
         matched = reliable_template(result, memes)
-        if vision is not None:
-            if vision.status == "ok" and vision.explanation is not None:
-                st.markdown("### Explanation")
-                explanation = vision.explanation
-                for title, value in [("What is visible", explanation.observations),
-                                     ("What it appears to express", explanation.expression),
-                                     ("Why the joke or reaction works", explanation.why_it_works)]:
-                    st.markdown("**" + title + "**")
-                    st.text(value)
-                if explanation.wording:
-                    st.markdown("**Wording, slang or references**")
-                    for wording in explanation.wording:
-                        st.text(wording)
-                st.markdown("**Uncertainty / missing context**")
-                st.text(explanation.uncertainty)
-                st.caption("This is a model interpretation, not a verified account of intent or history.")
-            else:
-                st.warning(vision.message or "Cloud explanation unavailable.")
-                st.markdown("### Limited explanation available")
-                if matched:
-                    st.caption("General collection metadata for a reliable template match; the exact uploaded joke is not interpreted.")
-                    render_metadata(matched)
-                else:
-                    st.caption("Visible text remains editable. Without the vision provider or a reliable template match, the app cannot explain this image's context reliably.")
         with st.expander("Template context", expanded=False):
             identity = result["identification"]
-            st.caption("Optional local collection evidence. A match is not required for an explanation.")
+            st.caption("Local collection metadata; the exact uploaded joke is not interpreted.")
             if matched:
                 render_metadata(matched)
             elif identity.status == "possible" and identity.candidates:
                 names = {m["id"]: m["name"] for m in memes}
                 st.caption("Possible match: " + names.get(identity.candidates[0]["id"], "Unknown") +
-                           ". Too uncertain to use as an explanation hint.")
+                           ". Too uncertain to identify reliably.")
             else:
-                st.caption("No reliable match. This does not limit Gemini's image explanation.")
+                st.caption("No reliable match. You can still search for related memes using visible text.")
             for notice in result["notices"]:
                 st.caption(notice)
         with st.expander("Related memes", expanded=False):

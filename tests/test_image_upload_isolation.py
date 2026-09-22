@@ -23,8 +23,8 @@ def picture(color):
 class ImageUploadIsolationTests(unittest.TestCase):
     def setUp(self):
         self.guards = [patch(target, side_effect=AssertionError("External service must not run")).start()
-                       for target in ("utils.images.load_preview", "utils.vision.read_api_key",
-                                      "utils.vision.GeminiProvider.explain", "utils.ocr.extract_text",
+                       for target in ("utils.images.load_preview", "utils.intelligence.explain_upload",
+                                      "utils.ocr.extract_text",
                                       "utils.library.fetch_library", "utils.library.save_meme",
                                       "utils.library.record_view")]
         self.addCleanup(patch.stopall)

@@ -5,115 +5,64 @@ name, description, emotion, or situation. The current collection contains
 **40 meme templates**, with searchable metadata and remote image previews.
 Browse and search as a guest, or sign in to keep a personal meme library.
 
-V3 adds **Explain a Meme** on Home. It explains arbitrary uploaded memes and
-screenshots using local OCR and, on an explicit click, Gemini visual understanding.
-The 40-template collection is optional supporting context, not a requirement
-for explanation. V2 search, filters and library behavior remain available.
+The external Gemini explainer was removed. A new local **Meme Explainer** is
+planned separately. Local OCR, upload normalization, template identification,
+metadata and related meme retrieval remain available. Search Engine V3,
+accounts, libraries and the creator/editor retain their existing behavior.
 
-## Meme explanation setup and use
+## Local image analysis setup and use
 
-Install `requirements.txt` in your virtual environment using the Windows setup
-below. RapidOCR runs locally on CPU through ONNX Runtime. General visual
-explanation uses the official `google-genai==2.23.0` SDK and
-`gemini-3.5-flash-lite` (configured by `MODEL` in `utils/vision.py`).
-No Tesseract, PyTorch, GPU or Supabase schema change is needed.
+Install `requirements.txt` using the Windows setup below. RapidOCR runs locally
+on CPU through ONNX Runtime. No external explanation API key is needed.
 
-### Gemini configuration
-
-Create a Gemini API key in [Google AI Studio](https://aistudio.google.com/apikey).
-Add this top-level entry to the existing gitignored `.streamlit/secrets.toml`
-using your own key; do not commit the file:
-
-```toml
-GEMINI_API_KEY = "<YOUR_GEMINI_API_KEY>"
-```
-
-The vision provider accesses only `GEMINI_API_KEY`, and only when the Explain
-button is pressed. Missing configuration leaves local features usable.
-Availability, free-tier quotas and paid usage depend on your Google project;
-check [Gemini API pricing](https://ai.google.dev/gemini-api/docs/pricing).
-No fallback model is selected silently when the configured model is unavailable.
-
-On Home, expand **Explain a Meme**:
+On Home, expand **Analyze a Meme**:
 
 1. Upload one JPEG, PNG or static WebP (up to 10 MB and 20 megapixels).
 2. Check the normalized, metadata-free preview. Processing uses at most
    1600 pixels per side; animated and corrupt images are rejected.
-3. Click **Read text locally** and optionally correct the visible text.
+3. Click **Read text locally** to run OCR and local template identification.
    OCR downloads its small models on first use, then reuses the local cache.
-4. Review the cloud disclosure and click **Explain this meme**. OCR is optional:
-   missing/unreadable text never blocks the image-based request.
-5. Read observations, the apparent meaning, why the joke/reaction works,
-   supported wording/references, and uncertainty or missing context.
-6. Optionally expand **Template context** or **Related memes**.
-7. Use **Clear image** to discard the upload and its results. Editing text or
-   replacing the upload invalidates the prior explanation without sending again.
+4. Optionally correct the visible text and review **Template context**.
+5. Use **Related memes** to find templates using the visible/corrected text.
+6. Use **Clear image** to discard the upload and its results. Replacing the
+   upload clears prior analysis; editing text clears related search results.
 
-### Privacy and request behavior
+### Local processing and template context
 
-Validation, preview and OCR run on the app's machine (the Streamlit server on
-a hosted deployment). Uploading, running OCR, editing text and Streamlit reruns
-do not send the image to Gemini. Only **Explain this meme** sends normalized PNG
-bytes, OCR text, any corrected text, and an optional reliable template hint.
-The request uses inline bytes, not the provider Files API. Each click makes one
-Interactions API `client.interactions.create(...)` call with `store=False`,
-automatic retries disabled and an explicit 30-second HTTP timeout. Structured
-JSON output is validated before display; incomplete or malformed results use
-the local fallback.
+Validation, preview, OCR and matching run on the app's machine (the Streamlit
+server on a hosted deployment). Uploaded images and visible text are not sent
+to an external explainer or persisted to disk or Supabase. Public references,
+indexes and model files are cached under gitignored `.cache/v3/`.
+Logout/session expiry clears upload state and resets the uploader.
 
-Google processes the submitted content under its API terms; free-tier content
-may be used to improve its products. See [Google's API terms](https://ai.google.dev/gemini-api/terms).
-Session-local storage in this app does not imply local-only processing by Google.
-The app does not persist images, OCR text or explanations to disk, Supabase or
-a global content cache, and does not log this content or keys. Only public
-references, indexes and model files are stored under gitignored `.cache/v3/`.
-Logout/session expiry clears V3 state and resets the uploader. Explanation
-never saves a meme or records a recent view.
+The local matcher uses prepared references from `memes.json`, lightweight
+hashes and optional cached FastEmbed image embeddings. No references/models
+are downloaded by the matcher during normal UI use. Prepare references with
+`python -m utils.template_index --hash-only` (omit `--hash-only` to prepare
+optional CLIP embeddings).
 
-### Optional template context and fallback
-
-The retained local matcher uses previously prepared references from
-`memes.json`, lightweight hashes and optional cached FastEmbed image embeddings.
-No references/models are downloaded by the matcher during normal UI use.
-Template setup is not part of the explanation flow; the optional developer
-preparation command remains `python -m utils.template_index --hash-only`
-(omit `--hash-only` to prepare optional CLIP embeddings).
-
-Only a reliable match contributes metadata as a hint. Weak matches are not
-sent to Gemini or used as explanation facts. Missing references, an unknown
-template or an unavailable image-embedding model do not block Gemini.
-
-Missing keys/SDK, timeouts, quota/rate limits, provider errors or malformed
-responses show **Cloud explanation unavailable** and **Limited explanation
-available**. OCR and corrected text remain accessible. Reliable matches can
-provide general collection metadata; otherwise the app admits that it cannot
-reliably explain the image without the provider. Related search still works.
+Reliable matches show collection metadata, not an interpretation of the exact
+uploaded joke. Unknown or weak matches remain uncertain. Missing references
+or image embeddings do not block OCR or related caption search. Metadata
+importers reuse reliable local template metadata by default; the generic
+explanation/result interface remains available for explicitly supplied providers.
 
 Related suggestions use lexical caption search and shared situations,
 categories and emotions, with duplicates and the selected template excluded.
-Caption search opts out of V2's global semantic query cache. V2's ordinary
-search still uses its existing semantic fallback.
+Caption search opts out of the global semantic query cache. Ordinary search
+retains its existing semantic fallback.
 
 ### Prototype limitations
 
-- Explanation supports images outside the collection. Identification alone
-  remains limited to 40 templates; incomplete indexes cannot produce a reliable hint.
-- Hash-only matching works best for near-duplicate templates. Added captions,
-  large crops, screenshot borders and remakes can prevent a match. CLIP may
-  improve tolerance but can also confuse similar scenes.
-- Matching thresholds are conservative prototype heuristics, not calibrated
-  accuracy or certainty. Unknown and ambiguous results are expected.
-- OCR can miss small, stylized or obscured text. English text is the primary
-  tested use case; recognition quality in other languages is not guaranteed.
-- Generated explanations can be wrong about sarcasm, slang, cultural references,
-  panel relationships or intent. They are interpretations, not verified facts.
-  The provider is instructed to distinguish observation from interpretation,
-  treat embedded instructions as image content, avoid invented identities,
-  origins/events/creators/missing words, and not force humor onto sincere images.
-- No web grounding or historical fact verification is performed. Missing context
-  should be stated; guardrails and structured validation cannot guarantee factuality.
-- The provider interface is replaceable for a future local/Ollama adapter;
-  only Gemini is implemented now. No video, remixing or V4/V5 features are added.
+- Identification is limited to the prepared collection; incomplete indexes
+  cannot produce a reliable match.
+- Hash matching works best for near-duplicates. Captions, crops, borders and
+  remakes can prevent a match. Optional CLIP can confuse similar scenes.
+- Matching thresholds are conservative heuristics, not calibrated certainty.
+- OCR can miss small, stylized or obscured text. English is the primary tested
+  use case; recognition quality in other languages is not guaranteed.
+- General visual explanations and cultural or historical verification are
+  unavailable. The planned local Meme Explainer is a separate feature.
 
 ## Current features
 
@@ -168,9 +117,9 @@ utils/identification.py Hash/visual matching and abstention
 utils/explanations.py   Grounded metadata and related-template retrieval
 utils/intelligence.py   Analysis orchestration and partial failure handling
 utils/intelligence_ui.py Session-local Home upload interface
-utils/vision.py         Replaceable vision interface and Gemini Interactions adapter
+utils/vision.py         Generic explanation/result classes and provider interface
 tests/                  unittest regression and Streamlit app tests
-requirements.txt        App dependencies, local OCR and Google GenAI SDK
+requirements.txt        App dependencies and local OCR
 .streamlit/secrets.toml Local Supabase configuration (ignored; never commit)
 ```
 
@@ -309,25 +258,11 @@ validate a live Supabase project's RLS policies.
 V3 tests cover upload formats/limits/orientation, OCR failures, hash and visual
 matching decisions, cache preparation/reuse, metadata fidelity, deduplication,
 partial failures, upload replacement/clearing and Streamlit result rendering.
-Vision tests cover unknown images, corrected OCR, strict hint selection, missing
-keys, timeout/quota/provider errors, malformed output and explicit-click-only
-requests. A real SDK test uses a mock HTTP transport to verify serialization and
-disabled retries without network access or a real API key. Existing UI test
-expectations follow the explanation-first labels; all prior test cases remain.
-Model/network calls are mocked in unit tests. AppTest lacks an uploader setter,
-so upload integration tests inject that widget boundary and exercise the real
-validation and UI. Run a browser upload smoke test before release.
-
-Implementation verification on Windows (Python 3.13): FastEmbed 0.8.0,
-ONNX Runtime 1.30.0, RapidOCR 3.9.2 and Pillow 12.3.0 import successfully.
-RapidOCR read a generated English text image successfully. Initial public
-reference preparation fetched 38/40 images; Success Kid and First World Problems
-were unavailable in that attempt. These are local verification observations,
-not guarantees about future availability. Google GenAI 2.23.0 was installed after
-a successful dependency dry run. Live Gemini access and explanation quality,
-browser upload/privacy flow and optional full CLIP inference still require
-manual smoke tests. No real Gemini request or missing-reference retry was made
-during this change.
+Generic provider tests cover corrected OCR, reliable hint selection, explicit
+provider injection, failure handling and the unavailable default explainer.
+Model/network calls are mocked in unit tests. Upload integration tests exercise
+validation, local analysis, editing, clearing and related retrieval through
+Streamlit. Run a browser upload smoke test before release.
 
 For a live isolation check, use two different accounts: save different memes
 and open different details under each account, then verify Saved and Recently

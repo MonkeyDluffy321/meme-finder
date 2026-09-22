@@ -23,11 +23,11 @@ class IntelligenceAppTests(unittest.TestCase):
     def test_idle_home_is_lazy_and_saved_hides_upload(self):
         app = AppTest.from_file(str(APP)).run()
         self.assertFalse(app.exception)
-        self.assertTrue(any(e.label == "Explain a Meme" for e in app.expander))
+        self.assertTrue(any(e.label == "Analyze a Meme" for e in app.expander))
         self.prepare.assert_not_called()
         self.analyze.assert_not_called()
         app.button(key="saved").click().run()
-        self.assertFalse(any(e.label == "Explain a Meme" for e in app.expander))
+        self.assertFalse(any(e.label == "Analyze a Meme" for e in app.expander))
 
     def test_upload_analyze_edit_clear_and_no_database_writes(self):
         buffer = BytesIO()
@@ -40,6 +40,7 @@ class IntelligenceAppTests(unittest.TestCase):
             app = AppTest.from_file(str(APP)).run()
             self.assertFalse(app.exception)
             self.assertIn("v3_validated", app.session_state)
+            self.assertFalse(any(button.key == "v3_explain" for button in app.button))
             app.button(key="v3_analyze").click().run()
             self.assertFalse(app.exception)
             self.assertTrue(any("No reliable match" in m.value for m in app.caption))
@@ -82,7 +83,18 @@ class IntelligenceAppTests(unittest.TestCase):
             self.assertFalse(app.exception)
             self.assertNotIn("v3_result", app.session_state)
 
-    def test_possible_explanation_uses_collection_metadata(self):
+    def test_reliable_match_displays_local_metadata(self):
+        self.analyze.return_value["identification"] = Identification(
+            "likely", [{"id": "drake-hotline-bling"}])
+        buffer = BytesIO()
+        Image.new("RGB", (30, 30), "red").save(buffer, format="PNG")
+        with patch("utils.intelligence_ui.st.file_uploader", return_value=buffer):
+            app = AppTest.from_file(str(APP)).run()
+            app.button(key="v3_analyze").click().run()
+            self.assertFalse(app.exception)
+            self.assertTrue(any("Drake" in m.value for m in app.markdown))
+
+    def test_possible_match_remains_uncertain(self):
         self.analyze.return_value["identification"] = Identification(
             "possible", [{"id": "drake-hotline-bling"}])
         self.analyze.return_value["ocr"] = OCRResult("unavailable")

@@ -284,7 +284,7 @@ def render_creator():
     st.caption("Upload a base image, add images and captions, and download your finished meme.")
     st.caption("Images and captions stay in this session on the app's machine. "
                "On a hosted app, processing runs on the Streamlit server. "
-               "Creation does not use OCR, Gemini or your saved library.")
+               "Creation does not use OCR or your saved library.")
     st.button("Back to browsing", key="creator_back", on_click=close_creator)
     with st.container(key="creator_source"):
         generation = st.session_state.get("creator_generation", 0)

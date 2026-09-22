@@ -4,7 +4,7 @@ from utils.ocr import extract_text, OCRResult
 from utils.template_index import read_index, embed_images
 from utils.identification import identify, Identification
 from utils.explanations import explain
-from utils.vision import GeminiProvider, VisionResult
+from utils.vision import VisionResult
 
 
 def reliable_template(result, memes):
@@ -15,16 +15,17 @@ def reliable_template(result, memes):
 
 
 def explain_upload(upload, local_result, memes, corrected_text=None, provider=None):
-    """Explicit-click entry point; template/OCR failure never gates vision."""
+    """Use an explicitly supplied provider; no default explainer is installed."""
+    if provider is None:
+        return VisionResult("unavailable", message="Image explanation unavailable. A local Meme Explainer is planned separately.")
     matched = reliable_template(local_result, memes)
     hint = explain(matched) if matched else None
     original = local_result["ocr"].text
     correction = corrected_text if corrected_text is not None and corrected_text != original else None
     try:
-        provider = provider if provider is not None else GeminiProvider()
         return provider.explain(upload.preview, original, correction, hint)
     except Exception:
-        return VisionResult("error", message="Cloud explanation unavailable. Please try again later.")
+        return VisionResult("error", message="Image explanation unavailable. Please try again later.")
 
 
 def analyze(upload, memes):
