@@ -12,6 +12,7 @@ from utils.images import load_preview, load_local_preview, load_external_preview
 from utils.search import normalize_query
 from utils.search_all import search_all
 from utils.meme_results_ui import render_finished_memes
+from utils.result_actions import render_result_actions
 from utils.web_search import search_web
 from utils.account_ui import render_account
 from utils.auth import current_account
@@ -272,15 +273,19 @@ with st.container(key="results"):
             with column:
                 with st.container(key="card-" + meme["id"]):
                     with st.container(key="preview-" + meme["id"]):
-                        if meme.get("external_result"):
-                            preview = load_external_preview(meme.get("image_url"))
-                        elif meme.get("web_result"):
-                            # Never refetch an untrusted URL through the catalog preview loader.
-                            preview = meme.get("_web_preview")
-                        elif meme.get("local_image"):
-                            preview = load_local_preview(meme.get("local_image"))
-                        else:
-                            preview = load_preview(meme.get("image_url"))
+                        preview = None
+                        try:
+                            if meme.get("external_result"):
+                                preview = load_external_preview(meme.get("image_url"))
+                            elif meme.get("web_result"):
+                                # Never refetch an untrusted URL through the catalog preview loader.
+                                preview = meme.get("_web_preview")
+                            elif meme.get("local_image"):
+                                preview = load_local_preview(meme.get("local_image"))
+                            else:
+                                preview = load_preview(meme.get("image_url"))
+                        except Exception:
+                            pass
 
                         if preview is None:
                             st.caption("Preview unavailable")
@@ -313,6 +318,7 @@ with st.container(key="results"):
                         '</div>'
                     )
 
+                    render_result_actions(preview, "template-" + meme["id"], template=meme)
                     if not (meme.get("web_result") or meme.get("external_result")) and card_actions(meme, saved_ids):
                         st.caption(
                             "Categories: " +

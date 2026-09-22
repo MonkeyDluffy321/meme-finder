@@ -1,6 +1,6 @@
 # Meme Finder
 
-## Search Engine V4 foundation (V4.1–V4.3)
+## Search Engine V4 foundation (V4.1–V4.4)
 
 V4 is designed to search both **meme templates** and **recurring/known finished
 memes**, not every meme ever posted online. V4.1 adds the finished-meme data
@@ -35,9 +35,12 @@ remain separate. Hashes and source-confidence claims require trusted ingestion;
 URL syntax validation does not authorize downloading or approve a source.
 
 Results expose **Finished Memes**, then **Templates**, as separate groups. Finished
-cards show previews, captions, provider and optional template name. Planned actions
-are Download for finished memes and Download/Create Meme for templates; V4.3 adds
-none of those buttons. Tests use small synthetic
+cards show previews, captions, provider and optional template name. V4.4 adds
+**Download** for finished memes and **Download** / **Create Meme** for templates.
+Downloads reuse displayed image bytes without another network request. Create Meme
+opens the existing Creator with the selected template as a fresh draft. Save and
+details remain available. Unavailable images disable image actions without hiding
+results. Tests use small synthetic
 records with placeholder URLs, not a production collection.
 
 Meme Finder is a Python and Streamlit app for finding meme templates by
