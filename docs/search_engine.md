@@ -12,8 +12,8 @@ search two distinct content types:
 
 The two datasets and ranking systems remain separate.
 
-V4.1–V4.7 are complete; V4.8, the reproducible offline search-quality benchmark,
-is next. See [Project Status](PROJECT_STATUS.md) and the [Roadmap](ROADMAP.md)
+V4.1–V4.7 are complete; V4.8 now has its first reproducible offline lexical
+benchmark. Evaluation remains in progress. See [Project Status](PROJECT_STATUS.md) and the [Roadmap](ROADMAP.md)
 for the current checkpoint and agreed development order.
 
 ```text
@@ -291,9 +291,67 @@ or inference of missing template-specific facts was added.
 The live crawler still has its existing total budget of 2 pages/4 images, normally
 split as 1 page/2 images per approved source. No crawler expansion was used here.
 
-The next milestone is V4.8: a reproducible offline benchmark covering exact names,
+The current milestone is V4.8: a reproducible offline benchmark covering exact names,
 aliases, descriptions, situations, finished-meme captions, typos, Hinglish-lite,
 ambiguous queries, and correct abstention for irrelevant/nonsense queries.
 After V4.8, work returns to the paused Local Meme Explainer foundation; the full
 chatbot remains a separate later design discussion. Follow the agreed
 [Roadmap](ROADMAP.md). Permanent catalog entry still requires human approval.
+
+## Offline evaluation (V4.8)
+
+Run from the repository root:
+
+```powershell
+.\.venv\Scripts\python.exe -m utils.search_eval
+.\.venv\Scripts\python.exe -m utils.search_eval --json
+.\.venv\Scripts\python.exe -m pytest tests/test_search_eval.py -q
+```
+
+`tests/search_eval.json` contains 34 judged cases across all nine benchmark
+categories. Each case names its target (`templates` or `finished`), relevant IDs,
+explicit abstention expectation, and judgment rationale. Template cases use all
+40 records in `data/memes.json`. The four isolated finished records in
+`tests/fixtures/search_eval_memes.json` reproduce the synthetic fixture from
+`tests/test_meme_search.py`; placeholder image URLs are never fetched. The
+application finished-meme index is neither read nor populated by the runner.
+
+The profile `offline-lexical-curated-and-fixture-v1` calls existing
+`search_memes(..., use_semantic=False, require_strong=True)` and
+`search_finished_memes(..., index_path=fixture, limit=20)`. This measures the
+curated lexical path and finished-meme ranking independently. It excludes
+semantic models, imported/external templates, combined UI routing, filters,
+and live discovery. It is not a full production hybrid-search quality claim.
+No ranking code or thresholds are changed. Unit tests guard against network
+and model calls and verify repeatability and unchanged input files.
+
+Metric definitions:
+
+- Top-1 accuracy: fraction of positive cases whose first result is relevant.
+- Top-3 recall: mean fraction of each positive case's relevant IDs found in its
+  first three results. Multiple relevant IDs are supported; either may rank first.
+- Abstention accuracy: fraction of abstention cases returning no results.
+- Noise@3: irrelevant returned slots divided by all returned slots in the first
+  three results, pooled across positive and abstention cases. Short lists are
+  not padded. All unlisted IDs in the judged group count as irrelevant.
+- A positive case passes only with a relevant first result, complete recall@3,
+  and zero noise@3. An abstention case passes only with an empty result list.
+  Undefined denominators display as N/A (`null` in JSON), not perfect scores.
+
+Reports include overall, category and target metrics, failed queries with
+expected/returned IDs, and SHA256 fingerprints of the dataset and both corpora.
+JSON also includes every case result and metric denominators. Dataset paths
+resolve relative to the dataset file. Invalid or missing expected identities
+fail validation instead of silently disappearing from the benchmark.
+The default CLI exits successfully after measurement even if quality cases fail;
+`--fail-on-failure` exits 1 for any failed judgment. Infrastructure errors remain
+errors. Evaluator tests check scoring correctness without demanding perfect
+search quality or locking in the current failures.
+
+This is a small, manually judged baseline, not an exhaustive relevance dataset.
+Hinglish cases express intended matches without assuming translation support;
+ambiguous cases include both multiple valid matches and justified abstention.
+Blank browsing queries are excluded. Changes to corpus contents/order, judgments,
+ranking code or dependency versions can change measurements; compare the same
+repository revision/environment and input fingerprints. See
+[Project Status](PROJECT_STATUS.md) for measured results and the next task.

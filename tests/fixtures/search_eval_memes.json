@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "records": [
+    {
+      "meme_id": "food",
+      "provider": "fixture",
+      "caption_text": "Pizza or tacos?",
+      "image_url": "https://example.org/food.png",
+      "template_id": "two-buttons",
+      "template_name": "Two Buttons",
+      "topics": [
+        "pizza",
+        "taco",
+        "choice"
+      ],
+      "situation": "Can't decide what to eat"
+    },
+    {
+      "meme_id": "doubt",
+      "provider": "fixture",
+      "caption_text": "Planting seeds of doubt",
+      "image_url": "https://example.org/doubt.png",
+      "topics": [
+        "uncertainty"
+      ],
+      "situation": "Making someone question their confidence"
+    },
+    {
+      "meme_id": "sleep",
+      "provider": "fixture",
+      "caption_text": "Sleep or another episode?",
+      "image_url": "https://example.org/sleep.png",
+      "template_id": "two-buttons",
+      "template_name": "Two Buttons",
+      "topics": [
+        "choice",
+        "television"
+      ],
+      "situation": "Can't decide whether to sleep"
+    },
+    {
+      "meme_id": "garden",
+      "provider": "fixture",
+      "caption_text": "Watering my plants",
+      "image_url": "https://example.org/garden.png",
+      "topics": [
+        "seeds",
+        "gardening"
+      ],
+      "source_confidence": "verified"
+    }
+  ]
+}
