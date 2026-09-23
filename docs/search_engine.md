@@ -1,8 +1,45 @@
 # Meme Finder search engine
 
-## Architecture and pipeline
+## Search Engine V4 current architecture
 
-Phase 1 adds a separate external template metadata index. The existing 41 local
+Last updated: 23 September 2026
+
+Search Engine V4 extends the existing template-search system so Meme Finder can
+search two distinct content types:
+
+1. meme templates;
+2. known/finished captioned memes.
+
+The two datasets and ranking systems remain separate.
+
+V4.1–V4.7 are complete; V4.8, the reproducible offline search-quality benchmark,
+is next. See [Project Status](PROJECT_STATUS.md) and the [Roadmap](ROADMAP.md)
+for the current checkpoint and agreed development order.
+
+```text
+User query
+    |
+    +--> Finished-meme index
+    |       |
+    |       +--> caption
+    |       +--> topics
+    |       +--> situation
+    |       +--> optional template context
+    |
+    +--> Template search
+            |
+            +--> curated catalog
+            +--> external template index
+            +--> lexical / conservative semantic retrieval
+
+If indexed results are insufficient:
+    |
+    +--> explicit bounded live-web discovery
+```
+
+## Template-search architecture and pipeline
+
+The template-search system includes a separate external template metadata index. The existing 41 local
 templates (base catalog plus approved imports) are not replaced or modified.
 
 1. `app.py` runs existing V1 lexical/fuzzy/semantic search against the local catalog.
@@ -254,9 +291,9 @@ or inference of missing template-specific facts was added.
 The live crawler still has its existing total budget of 2 pages/4 images, normally
 split as 1 page/2 images per approved source. No crawler expansion was used here.
 
-Only Phase 1 was specified in the repository/task. Subsequent fixed-roadmap phase
-names and order have not been supplied. Follow-on capabilities to schedule are:
-additional provider coverage and refresh/removal policy; relevance evaluation and
-richer metadata; provenance/moderation and visual deduplication; and a larger
-indexed storage backend if measured scale requires it. None are implemented by
-this change, and none should bypass human approval for permanent catalog entry.
+The next milestone is V4.8: a reproducible offline benchmark covering exact names,
+aliases, descriptions, situations, finished-meme captions, typos, Hinglish-lite,
+ambiguous queries, and correct abstention for irrelevant/nonsense queries.
+After V4.8, work returns to the paused Local Meme Explainer foundation; the full
+chatbot remains a separate later design discussion. Follow the agreed
+[Roadmap](ROADMAP.md). Permanent catalog entry still requires human approval.

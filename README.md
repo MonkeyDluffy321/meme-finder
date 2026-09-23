@@ -1,6 +1,12 @@
 # Meme Finder
 
-## Search Engine V4 foundation (V4.1–V4.6)
+## Search Engine V4 (V4.1–V4.7 complete; V4.8 evaluation next)
+
+V4.8 is the remaining search-quality milestone. It will add a reproducible offline
+benchmark covering exact names, aliases, descriptions, situations, finished-meme
+captions, typos, Hinglish-lite queries, ambiguous queries, and correct abstention
+for irrelevant/nonsense queries. See [Project Status](docs/PROJECT_STATUS.md) and
+the [Roadmap](docs/ROADMAP.md) for the current development checkpoint.
 
 V4 is designed to search both **meme templates** and **recurring/known finished
 memes**, not every meme ever posted online. V4.1 adds the finished-meme data
@@ -114,10 +120,12 @@ name, description, emotion, or situation. The current collection contains
 **40 meme templates**, with searchable metadata and remote image previews.
 Browse and search as a guest, or sign in to keep a personal meme library.
 
-The external Gemini explainer was removed. A new local **Meme Explainer** is
-planned separately. Local OCR, upload normalization, template identification,
-metadata and related meme retrieval remain available. Search Engine V3,
-accounts, libraries and the creator/editor retain their existing behavior.
+The external Gemini explainer was removed. The local **Meme Explainer** foundation
+is paused on `feature/local-meme-explainer` until Search V4.8 is complete.
+The full chatbot is a separate later design discussion. Local OCR, upload
+normalization, template identification, metadata and related meme retrieval remain
+available. Existing template search, accounts, libraries and the creator/editor
+retain their existing behavior.
 
 ## Local image analysis setup and use
 
@@ -171,7 +179,7 @@ retains its existing semantic fallback.
 - OCR can miss small, stylized or obscured text. English is the primary tested
   use case; recognition quality in other languages is not guaranteed.
 - General visual explanations and cultural or historical verification are
-  unavailable. The planned local Meme Explainer is a separate feature.
+  unavailable. The local Meme Explainer foundation remains on its paused branch.
 
 ## Current features
 
@@ -364,7 +372,7 @@ preview handling, authentication, profiles, library operations, and Streamlit
 interactions. Authentication and library tests use mocked clients; they do not
 validate a live Supabase project's RLS policies.
 
-V3 tests cover upload formats/limits/orientation, OCR failures, hash and visual
+Local image analysis tests cover upload formats/limits/orientation, OCR failures, hash and visual
 matching decisions, cache preparation/reuse, metadata fidelity, deduplication,
 partial failures, upload replacement/clearing and Streamlit result rendering.
 Generic provider tests cover corrected OCR, reliable hint selection, explicit
@@ -385,9 +393,10 @@ local automated tests separately cover application behavior with mocked services
 
 ## Future roadmap
 
-- Meme creation and remixing.
+- Creator 2.0 improvements to existing meme creation and remixing.
 - Video/GIF support.
 - Future GIF and sticker discovery and creation features.
 
-These are future features and are not part of V3. The sidebar Explore and Categories navigation entries
+These are later roadmap tracks after Search V4.8 and the return to the Local Meme
+Explainer foundation. The sidebar Explore and Categories navigation entries
 are disabled placeholders; the category filters described above are available.
