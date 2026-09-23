@@ -14,6 +14,19 @@ def open_creator():
     st.session_state.creator_active = True
 
 
+def open_template_creator(template, preview):
+    """Initialize the existing editor from the exact selected result image."""
+    try:
+        draft = CreatorDraft.from_bytes(preview)
+    except Exception:
+        st.session_state.library_notice = "Template image unavailable. Please try another template."
+        return
+    clear_creator()
+    st.session_state.creator_draft = draft
+    st.session_state.creator_source_digest = sha256(preview).hexdigest()
+    st.session_state.creator_template = {"id": template["id"], "name": template["name"]}
+
+
 def close_creator():
     st.session_state.creator_active = False
 
@@ -99,6 +112,7 @@ def _accept_upload(uploaded):
     for key in ("creator_draft", "creator_errors", "creator_source_error"):
         st.session_state.pop(key, None)
     st.session_state.creator_source_digest = digest
+    st.session_state.pop("creator_template", None)
     try:
         # The model delegates to the shared V3 upload validator. Do not retain the
         # original filename or raw bytes in additional session-state fields.
@@ -281,6 +295,8 @@ def _image_controls(layer_id, layer=None):
 
 def render_creator():
     st.title("Create a meme")
+    if template := st.session_state.get("creator_template"):
+        st.text("Selected template: " + template["name"])
     st.caption("Upload a base image, add images and captions, and download your finished meme.")
     st.caption("Images and captions stay in this session on the app's machine. "
                "On a hosted app, processing runs on the Streamlit server. "
