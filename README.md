@@ -1,8 +1,8 @@
 # Meme Finder
 
-## Search Engine V4 (V4.1–V4.7 complete; V4.8 evaluation next)
+## Search Engine V4 (V4.1–V4.8 complete)
 
-V4.8 is the remaining search-quality milestone. It will add a reproducible offline
+V4.8 completes the search-quality milestone with a reproducible offline
 benchmark covering exact names, aliases, descriptions, situations, finished-meme
 captions, typos, Hinglish-lite queries, ambiguous queries, and correct abstention
 for irrelevant/nonsense queries. See [Project Status](docs/PROJECT_STATUS.md) and
@@ -16,7 +16,7 @@ Empty groups are hidden. Both ranking engines and existing template cards remain
 unchanged; category/emotion filters apply only to templates. Finished memes need
 no template identity and do not appear in the account libraries.
 
-`data/meme_instances.json` is a separate versioned index, initially empty.
+`data/meme_instances.json` is a separate versioned index with 19 reviewed records.
 `utils/meme_index.py` validates and normalizes provider-independent records:
 `meme_id`, `provider`, `caption_text`, derived `normalized_caption`, optional
 `template_id`/`template_name`, `topics`, `situation`, `language`, `image_url`,
@@ -121,7 +121,8 @@ name, description, emotion, or situation. The current collection contains
 Browse and search as a guest, or sign in to keep a personal meme library.
 
 The external Gemini explainer was removed. The local **Meme Explainer** foundation
-is paused on `feature/local-meme-explainer` until Search V4.8 is complete.
+is the next development priority, resuming `feature/local-meme-explainer`
+now that Search V4.8 is complete.
 The full chatbot is a separate later design discussion. Local OCR, upload
 normalization, template identification, metadata and related meme retrieval remain
 available. Existing template search, accounts, libraries and the creator/editor

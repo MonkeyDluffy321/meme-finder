@@ -1,15 +1,16 @@
 # Meme Finder — Project Status
 
-Last updated: 27 September 2026
+Last updated: 2 October 2026
 
 This file is the source of truth for the current development checkpoint.
 Read this file before continuing Meme Finder development.
 
 ## Current branch
 
-`feature/search-v4-evaluation`
+`docs/post-v4.8-checkpoint` (documentation only)
 
-Based on the latest clean `main`.
+Search V4.8 was merged into `main` via PR #27. Locally synced `main` is the
+current completed Search V4 checkpoint; this branch records the post-merge handoff.
 
 ## Current priority
 
@@ -21,6 +22,8 @@ Current milestone:
 
 Next work is connecting the Local Meme Explainer foundation to Search V4 evidence.
 Full chatbot design, creator, GIF, sticker, and video work remain later tracks.
+Future Search V4 work is limited to actual regressions or deliberately scoped
+improvements; it is not the next development priority.
 
 ## Roadmap progress
 
@@ -48,7 +51,7 @@ Current state:
 - Can use reliable template metadata when available.
 - Supports basic question intents.
 - Does not require Gemini or another external explanation API.
-- Current V4 `main` was merged into the explainer branch.
+- The then-current V4 `main` was merged into the explainer branch at its paused checkpoint.
 - Full regression suite after integration:
   - 546 tests passed
   - 1366 subtests passed
@@ -86,22 +89,11 @@ The committed application index:
 
 `data/meme_instances.json`
 
-currently contains zero records on `main`.
-
-The finished-meme search architecture itself works.
-
-During previous local testing, a populated local index successfully returned real
-finished memes, including examples using Success Kid and a "2006 Honda Civic"
-captioned meme.
-
-Therefore:
-
-- finished-meme search code is working;
-- finished-meme ingestion is working;
-- the committed reusable application index is currently empty;
-- data population and evaluation must be treated separately from search-engine code.
-
-Do not confuse an empty index with a broken finished-meme search engine.
+now contains 19 reviewed persistent finished-meme records on `main`.
+The app uses this index, not a temporary preview file. Manual verification
+confirmed finished searches for `2006 honda`, `change my mind`, and `movie night`.
+Ordinary profanity is not blanket-blocked. The frozen offline benchmark continues
+to use its separate controlled fixture; data population and evaluation are distinct.
 
 ## V4.8 goals
 
@@ -172,9 +164,9 @@ noise@3 to pass. Abstention cases require an empty result list. See
 [search evaluation documentation](search_engine.md#offline-evaluation-v48)
 for metric definitions, scope and reproducibility limitations.
 
-### V4.8 completion — 27 September 2026
+### V4.8 post-merge completion checkpoint — 2 October 2026
 
-Search V4 is complete. The unchanged 34-case benchmark now passes 34/34:
+Search V4 is complete and merged to `main` via PR #27. The frozen benchmark passes 34/34:
 
 - Top-1 accuracy: 100% (26/26 positive cases).
 - Top-3 recall: 100% (mean over 26 positive cases).
@@ -186,7 +178,8 @@ Changes add conservative query-only Hinglish-lite normalization, unique embedded
 complete catalog-name/alias recovery with supported context and ambiguity/negation
 guards, and suppression of weaker finished-meme subset matches behind a
 full-coverage leader. Exact captions and equally supported alternatives survive.
-The benchmark and production data are unchanged. Results apply to the documented
+The benchmark is unchanged; the persistent application index now has 19 reviewed
+records. Benchmark results apply to the documented
 offline lexical profile, not comprehensive production hybrid-search quality.
 
 The next priority is returning to the Local Meme Explainer foundation; no
@@ -216,12 +209,10 @@ README should not be used as a development diary.
 
 ## Latest verified test checkpoint
 
-On `feature/search-v4-evaluation`, after the V4.8 quality fixes:
+Final verified Search V4 checkpoint, now merged to `main`:
 
-- Focused search tests (all `test_search*.py`, `test_meme_search.py`, and
-  `test_external_index.py`): 106 passed, 559 subtests passed.
 - Full: `.\.venv\Scripts\python.exe -m pytest -q`
-  — 544 passed, 1384 subtests passed (159.03 seconds).
+  — 555 tests passed, 1,396 subtests passed.
 
 These checks validate infrastructure and regressions; all four original benchmark
 failures are resolved. The earlier explainer-branch result
@@ -230,7 +221,8 @@ failures are resolved. The earlier explainer-branch result
 ## Exact next task
 
 1. Return to the Local Meme Explainer foundation checkpoint on
-   `feature/local-meme-explainer` when branch integration is authorized.
+   `feature/local-meme-explainer`, using completed Search V4 on `main` as the
+   integration checkpoint when branch integration is authorized.
 2. Connect finished-meme retrieval and template metadata to explanation context.
 3. Add explainer-specific quality and abstention evaluation before expanding it.
 4. Keep full chatbot design as a separate later discussion.

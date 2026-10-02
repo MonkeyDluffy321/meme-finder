@@ -2,7 +2,7 @@
 
 ## Search Engine V4 current architecture
 
-Last updated: 27 September 2026
+Last updated: 2 October 2026
 
 Search Engine V4 extends the existing template-search system so Meme Finder can
 search two distinct content types:
@@ -306,10 +306,12 @@ chatbot remains a separate later design discussion. Follow the agreed
 
 ## Offline evaluation (V4.8)
 
-Status: COMPLETE (27 September 2026). Search V4 is complete.
+Status: COMPLETE. Search V4.8 is merged to `main` via PR #27; `main` is the
+completed Search V4 checkpoint (2 October 2026). The persistent application index
+`data/meme_instances.json` contains 19 reviewed finished-meme records.
 The unchanged benchmark passes 34/34: Top-1 accuracy 100% (26/26), mean Top-3
 recall 100%, abstention 100% (8/8), and Noise@3 0% (0/28 returned slots).
-Full pytest result: 544 passed, 1384 subtests passed. All four original baseline
+Final full pytest result: 555 passed, 1,396 subtests passed. All four original baseline
 failures are resolved; the original 30/34 measurements remain recorded in
 [Project Status](PROJECT_STATUS.md) for comparison.
 
