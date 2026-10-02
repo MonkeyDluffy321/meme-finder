@@ -120,7 +120,81 @@ def name_similarity(query_words, name_words):
     return ratio(" ".join(query_words), " ".join(name_words), score_cutoff=82)
 
 
-def search_memes(memes, query, *, use_semantic=True, require_strong=False):
+def normalize_hinglish_query(text, memes=()):
+    """Small query-only fallback; retain unknown words and all negation."""
+    vocabulary = {"dard": "pain", "jal": "fire", "sab": "all"}
+    particles = {"mein", "wali", "wala", "wale", "raha", "rahi", "hai", "hain"}
+    words = set(re.findall(r"\w+", text.lower()))
+    identity_words = {word for row in memes for label in [row.get("name", ""), *row.get("aliases", [])]
+                      for word in re.findall(r"\w+", label.lower())}
+    numeric = re.search(r"\bdo\s+(\w+)\s+(me|mein)\b", text.lower())
+    noun = numeric.group(1) if numeric else ""
+    plural = noun if noun.endswith("s") else noun + "s"
+    numeric_context = bool(numeric and plural in identity_words
+                           and not words & {"not", "no", "never", "nahi", "nahin", "mat"})
+    if numeric_context:
+        text = text[:numeric.start()] + "two " + plural + " in" + text[numeric.end():]
+        words = set(re.findall(r"\w+", text.lower()))
+    context = (bool(words & vocabulary.keys()) or len(words & particles) >= 2
+               or ("do" in words and bool(words & particles)))
+    if not context:
+        return text
+    def replace(match):
+        word = match.group().lower()
+        if word in particles:
+            return ""
+        return "two" if word == "do" else vocabulary.get(word, match.group())
+    normalized = " ".join(re.sub(r"\w+", replace, text).split())
+    # Particle-only input must never turn into blank-query catalog browsing.
+    return normalized if re.search(r"\w", normalized) else text
+
+
+def _embedded_identity(memes, query):
+    """Recover one literal multiword identity with supporting residual context."""
+    words = re.findall(r"\w+", query.casefold())
+    negation = {"not", "no", "never", "without", "neither", "nor", "nahi", "nahin", "mat"}
+    if set(words) & negation or re.search(r"n['’]t\b", query.casefold()):
+        return []
+    matches = {}
+    for index, meme in enumerate(memes):
+        for name in [meme.get("name", ""), *meme.get("aliases", [])]:
+            phrase = re.findall(r"\w+", name.casefold())
+            if not phrase:
+                continue
+            for start in range(len(words) - len(phrase) + 1):
+                if words[start:start + len(phrase)] == phrase:
+                    matches.setdefault(index, []).append((start, len(phrase)))
+    # Count even single-word/overlapping identities when rejecting ambiguity.
+    if len(matches) != 1:
+        return []
+    index, spans = next(iter(matches.items()))
+    meme = memes[index]
+    metadata = set().union(*(tokens for _, _, tokens in metadata_items(meme)))
+    framing = {"all", "but", "please", "show", "find", "meme", "template", "about"}
+    for start, length in spans:
+        if length < 2 or length == len(words):
+            continue
+        residual = " ".join(words[:start] + words[start + length:])
+        context = tokenize(normalize_hinglish_query(residual)) - CONTEXT_WORDS - framing
+        # Do not discard unexplained words just because an identity was quoted.
+        if context and context <= metadata:
+            return [meme]
+    return []
+
+
+def search_memes(memes, query, *, use_semantic=True, require_strong=False, strong_only=False):
+    """Keep original matches; retry supported Hinglish only after abstention."""
+    memes = list(memes)
+    results = _search_memes(memes, query, use_semantic=use_semantic, require_strong=require_strong, strong_only=strong_only)
+    if results:
+        return results
+    normalized = normalize_hinglish_query(query, memes)
+    if normalized != query:
+        results = _search_memes(memes, normalized, use_semantic=use_semantic, require_strong=require_strong, strong_only=strong_only)
+    return results or _embedded_identity(memes, query)
+
+
+def _search_memes(memes, query, *, use_semantic=True, require_strong=False, strong_only=False):
     """Admit useful evidence, then rank complete names, exact context, and typos.
 
     IDF counts each record once. Equal ranks retain input order and results
@@ -220,8 +294,11 @@ def search_memes(memes, query, *, use_semantic=True, require_strong=False):
         tier = 3 if complete_name else 2 if strong_exact else 1
         if complete_name or recovered_name or short_support == evidence_words:
             precision_protected.add(id(meme))
-        strong_match |= (tier >= 2 or recovered_name
-                         or (short_query and short_support == evidence_words))
+        individually_strong = (tier >= 2 or recovered_name
+                               or (short_query and short_support == evidence_words))
+        strong_match |= individually_strong
+        if strong_only and not individually_strong:
+            continue
         score = (sum(best_scores.values()) * (1 + 0.25 * coherent) + phrase_bonus) * coverage
         if recovered_name:
             score += FIELD_WEIGHTS["name"] * name_scores[index] / 100

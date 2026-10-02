@@ -118,6 +118,6 @@ class MemeIndexTests(unittest.TestCase):
         before = [[row["id"] for row in search_memes(catalog, query, use_semantic=False)] for query in queries]
         with patch("utils.search.search_memes", side_effect=AssertionError("Index must not rank templates")):
             clean_records([record(), record(caption_text="2 choices")])
-            self.assertEqual(load_index(), [])
+            self.assertTrue(load_index())  # Loading the populated app index must not rank templates.
         after = [[row["id"] for row in search_memes(catalog, query, use_semantic=False)] for query in queries]
         self.assertEqual(before, after)

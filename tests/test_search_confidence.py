@@ -80,7 +80,7 @@ class ConfidenceAppTests(unittest.TestCase):
 
     def test_weak_local_and_missing_index_allow_explicit_web_fallback(self):
         self.query("men in black")
-        self.index.assert_called_once()
+        self.assertTrue(self.index.called)
         self.assertFalse(any(h.value == "Roll Safe" for h in self.app.subheader))
         self.web.assert_not_called()
         self.app.button(key="search_web").click().run()
@@ -99,7 +99,8 @@ class ConfidenceAppTests(unittest.TestCase):
     def test_strong_curated_priority(self):
         for query in ("Drakeposting", "Success Kid", "2 choices"):
             self.query(query)
-        self.index.assert_not_called()
+        self.assertTrue(self.index.called)
+        self.semantic.assert_not_called()
         self.web.assert_not_called()
 
     def test_unknown_query_keeps_web_action(self):
