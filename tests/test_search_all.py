@@ -62,7 +62,7 @@ class SearchAllTests(unittest.TestCase):
             result = search_all("Weekend waffles", self.catalog)
             self.assertTrue(result["memes"])
             self.assertEqual(result["templates"], external)
-            fallback.assert_called_once_with("Weekend waffles")
+            fallback.assert_called_once_with("Weekend waffles", lexical_only=True)
 
     def test_ui_group_combinations_and_unidentified_meme(self):
         app = AppTest.from_file(str(ROOT / "app.py"), default_timeout=20).run()

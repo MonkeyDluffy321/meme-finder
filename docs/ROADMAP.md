@@ -1,6 +1,6 @@
 # Meme Finder — Development Roadmap
 
-Last updated: 23 September 2026
+Last updated: 27 September 2026
 
 This document defines the agreed development order for Meme Finder.
 
@@ -28,7 +28,7 @@ Completed:
 
 ## Priority 2 — Local Meme Explainer foundation
 
-Status: PAUSED / PARTLY COMPLETE
+Status: PARTLY COMPLETE / NEXT PRIORITY TO RESUME
 
 Branch:
 
@@ -75,7 +75,7 @@ A taco-vs-pizza Two Buttons meme had readable text, but the explainer mostly
 repeated the caption instead of reliably explaining the visual/template joke.
 
 Next work on Priority 2:
-Resume only after Search V4.8.
+Resume the paused foundation now that Search V4.8 is complete.
 
 Then connect the explainer to stronger Search V4 evidence:
 
@@ -97,7 +97,7 @@ The full chatbot/explainer product is a separate later design discussion.
 
 ## Priority 3 — Search Engine V4
 
-Status: CURRENT PRIORITY
+Status: COMPLETE
 
 Goal:
 Move Meme Finder from primarily template-name search toward searching both
@@ -208,7 +208,7 @@ Live discovery:
 
 ### V4.8 — Search benchmark and quality evaluation
 
-Status: NEXT
+Status: COMPLETE
 
 Goal:
 Prove Search V4 quality with a reproducible offline benchmark.
@@ -234,7 +234,12 @@ Measure:
 
 The benchmark must not depend on live network results.
 
-Search V4 is not formally closed until V4.8 is complete and results are reviewed.
+Completion checkpoint (27 September 2026): the unchanged offline benchmark passes
+34/34, with Top-1 accuracy, Top-3 recall and abstention accuracy all 100%, and
+Noise@3 0%. The full pytest suite passed: 544 tests, 1384 subtests.
+Search V4 is complete. These measurements cover the curated lexical/finished
+fixture profile; broader hybrid-search quality remains outside this benchmark.
+The next priority is returning to the Local Meme Explainer foundation.
 
 ---
 
@@ -339,7 +344,7 @@ Before implementation, define:
 
 1. Remove Gemini dependency — COMPLETE
 2. Build Local Meme Explainer foundation — PARTLY COMPLETE / PAUSED
-3. Finish Search Engine V4 — CURRENT
+3. Finish Search Engine V4 — COMPLETE
    - V4.1 COMPLETE
    - V4.2 COMPLETE
    - V4.3 COMPLETE
@@ -347,8 +352,8 @@ Before implementation, define:
    - V4.5 COMPLETE
    - V4.6 COMPLETE
    - V4.7 COMPLETE
-   - V4.8 NEXT
-4. Return to Local Meme Explainer foundation
+   - V4.8 COMPLETE
+4. Return to Local Meme Explainer foundation — NEXT
 5. Finalize documentation / handoff
 6. Creator 2.0
 7. GIF + Sticker Finder

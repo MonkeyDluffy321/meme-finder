@@ -14,6 +14,7 @@ APP_PATH = Path(__file__).resolve().parents[1] / "app.py"
 class AuthAppTests(unittest.TestCase):
     def setUp(self):
         patch("utils.images.load_preview", return_value=None).start()
+        patch("utils.images.load_external_preview", return_value=None).start()
         self.client = Mock()
         session = SimpleNamespace(user=SimpleNamespace(id="user-a", email="a@example.com"))
         self.client.auth.sign_in_with_password.return_value = SimpleNamespace(session=session)

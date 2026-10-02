@@ -1,6 +1,6 @@
 # Meme Finder — Project Status
 
-Last updated: 23 September 2026
+Last updated: 27 September 2026
 
 This file is the source of truth for the current development checkpoint.
 Read this file before continuing Meme Finder development.
@@ -13,14 +13,14 @@ Based on the latest clean `main`.
 
 ## Current priority
 
-Priority 3 — Search Engine V4
+Return to Priority 2 — Local Meme Explainer foundation
 
 Current milestone:
 
-**V4.8 — Search quality benchmark and evaluation: infrastructure added; baseline measured**
+**V4.8 COMPLETE — Search V4 is complete.**
 
-Do not start new chatbot, creator, GIF, sticker, or video work until this
-checkpoint is completed or the roadmap is deliberately changed.
+Next work is connecting the Local Meme Explainer foundation to Search V4 evidence.
+Full chatbot design, creator, GIF, sticker, and video work remain later tracks.
 
 ## Roadmap progress
 
@@ -35,7 +35,7 @@ Status: COMPLETE
 
 ### Priority 2 — Local Meme Explainer foundation
 
-Status: PAUSED CHECKPOINT
+Status: PAUSED CHECKPOINT — NEXT PRIORITY TO RESUME
 
 Branch:
 
@@ -62,12 +62,12 @@ The updated explainer branch has been pushed to GitHub.
 
 Do not continue full chatbot development yet.
 
-After Search V4.8, return to this foundation and connect it to stronger V4
+Search V4.8 is complete; next return to this foundation and connect it to stronger V4
 finished-meme/template evidence.
 
 ### Priority 3 — Search Engine V4
 
-Status: CURRENT PRIORITY
+Status: COMPLETE
 
 - V4.1 — Finished-meme index foundation: COMPLETE
 - V4.2 — Finished-meme retrieval and ranking: COMPLETE
@@ -76,7 +76,7 @@ Status: CURRENT PRIORITY
 - V4.5 — Finished-meme ingestion pipeline: COMPLETE
 - V4.6 — Controlled real-source ingestion and quality filtering: COMPLETE
 - V4.7 — Explicit query-driven/live web discovery: COMPLETE
-- V4.8 — Search benchmark and measurable quality evaluation: IN PROGRESS
+- V4.8 — Search benchmark and measurable quality evaluation: COMPLETE
 
 Search currently supports separate Finished Memes and Templates result groups.
 
@@ -157,7 +157,7 @@ were changed. This baseline does not establish full hybrid-search quality.
 All exact-name, alias, description, finished-caption, typo, ambiguous and nonsense
 cases passed. Situations passed 3/4; Hinglish-lite passed 0/3.
 
-Failed judgments (retained without tuning):
+Original failed judgments (all resolved at the completion checkpoint below):
 
 - `can't decide what to eat`: expected finished ID `food`; returned `food`,
   `sleep`. The first result is correct, but the second is irrelevant.
@@ -170,8 +170,27 @@ Failed judgments (retained without tuning):
 Positive cases require a relevant first result, complete recall@3, and zero
 noise@3 to pass. Abstention cases require an empty result list. See
 [search evaluation documentation](search_engine.md#offline-evaluation-v48)
-for metric definitions, scope and reproducibility limitations. V4.8 is not
-formally complete; the explainer foundation remains paused.
+for metric definitions, scope and reproducibility limitations.
+
+### V4.8 completion — 27 September 2026
+
+Search V4 is complete. The unchanged 34-case benchmark now passes 34/34:
+
+- Top-1 accuracy: 100% (26/26 positive cases).
+- Top-3 recall: 100% (mean over 26 positive cases).
+- Abstention accuracy: 100% (8/8 cases).
+- Noise@3: 0% (0/28 returned slots).
+- No remaining benchmark failures; all nine categories pass.
+
+Changes add conservative query-only Hinglish-lite normalization, unique embedded
+complete catalog-name/alias recovery with supported context and ambiguity/negation
+guards, and suppression of weaker finished-meme subset matches behind a
+full-coverage leader. Exact captions and equally supported alternatives survive.
+The benchmark and production data are unchanged. Results apply to the documented
+offline lexical profile, not comprehensive production hybrid-search quality.
+
+The next priority is returning to the Local Meme Explainer foundation; no
+explainer development or branch integration has been performed at this checkpoint.
 
 ## Documentation state
 
@@ -197,26 +216,24 @@ README should not be used as a development diary.
 
 ## Latest verified test checkpoint
 
-On `feature/search-v4-evaluation`, after adding the evaluator:
+On `feature/search-v4-evaluation`, after the V4.8 quality fixes:
 
-- Focused: `.\.venv\Scripts\python.exe -m pytest tests/test_search_eval.py -q`
-  — 7 passed, 9 subtests passed.
+- Focused search tests (all `test_search*.py`, `test_meme_search.py`, and
+  `test_external_index.py`): 106 passed, 559 subtests passed.
 - Full: `.\.venv\Scripts\python.exe -m pytest -q`
-  — 536 passed, 1368 subtests passed (116.38 seconds).
+  — 544 passed, 1384 subtests passed (159.03 seconds).
 
-These checks validate infrastructure and regressions; the four benchmark quality
-failures above remain measured failures. The earlier explainer-branch result
+These checks validate infrastructure and regressions; all four original benchmark
+failures are resolved. The earlier explainer-branch result
 (546 tests, 1366 subtests) belongs to its separate paused checkpoint.
 
 ## Exact next task
 
-1. Review the four baseline failures and their relevance judgments, especially
-   Hinglish recall and finished-meme situation noise.
-2. Agree the next measured quality change and any additional evaluation coverage
-   before tuning ranking; preserve this baseline for comparison.
-3. Rerun the benchmark and regression suite after any approved follow-up changes.
-4. Review results before declaring V4.8/Search V4 complete, then return to the
-   paused Local Meme Explainer foundation. Full chatbot design remains separate.
+1. Return to the Local Meme Explainer foundation checkpoint on
+   `feature/local-meme-explainer` when branch integration is authorized.
+2. Connect finished-meme retrieval and template metadata to explanation context.
+3. Add explainer-specific quality and abstention evaluation before expanding it.
+4. Keep full chatbot design as a separate later discussion.
 
 ## Session-start rule
 

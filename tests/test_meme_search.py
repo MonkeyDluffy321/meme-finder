@@ -49,6 +49,17 @@ class FinishedMemeSearchTests(unittest.TestCase):
         self.assertEqual(self.search("can't decide what to eat")[0]["meme_id"], "food")
         self.assertEqual(self.search("someone question confidence")[0]["meme_id"], "doubt")
 
+    def test_complete_leader_suppresses_subset_evidence(self):
+        self.assertEqual([r["meme_id"] for r in self.search("can't decide what to eat")], ["food"])
+        self.rows = [record("full", "red green blue"),
+                     record("equal", "blue green red"),
+                     record("partial", "red green")]
+        self.write()
+        self.assertEqual({r["meme_id"] for r in self.search("red green blue")}, {"full", "equal"})
+        self.rows = self.rows[2:]
+        self.write()
+        self.assertEqual([r["meme_id"] for r in self.search("red green blue")], ["partial"])
+
     def test_same_template_variants_and_soft_copies_remain(self):
         self.assertEqual({r["meme_id"] for r in self.search("two buttons")}, {"food", "sleep"})
         self.rows[0]["perceptual_hash"] = "01" * 128

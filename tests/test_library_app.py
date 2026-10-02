@@ -13,6 +13,7 @@ APP = Path(__file__).resolve().parents[1] / 'app.py'
 class LibraryAppTests(unittest.TestCase):
     def setUp(self):
         patch('utils.images.load_preview', return_value=None).start()
+        patch('utils.images.load_external_preview', return_value=None).start()
         self.addCleanup(patch.stopall)
         self.state, self.client, self.query = make_state()
         self.app = AppTest.from_file(str(APP)).run()
@@ -162,7 +163,8 @@ class LibraryAppTests(unittest.TestCase):
         self.app.text_input(key='query').set_value('2 choices').run()
         self.assertFalse(self.app.exception)
         headings = [h.value for h in self.app.subheader]
-        self.assertLess(headings.index('Two Buttons'), headings.index('Drake Hotline Bling'))
+        self.assertIn('Two Buttons', headings)
+        self.assertNotIn('Drake Hotline Bling', headings)  # Require individual strong evidence.
         self.assertTrue(self.app.warning)
 
     def test_logout_removes_private_cards(self):

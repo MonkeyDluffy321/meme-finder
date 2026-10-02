@@ -2,7 +2,7 @@
 
 ## Search Engine V4 current architecture
 
-Last updated: 23 September 2026
+Last updated: 27 September 2026
 
 Search Engine V4 extends the existing template-search system so Meme Finder can
 search two distinct content types:
@@ -12,8 +12,8 @@ search two distinct content types:
 
 The two datasets and ranking systems remain separate.
 
-V4.1–V4.7 are complete; V4.8 now has its first reproducible offline lexical
-benchmark. Evaluation remains in progress. See [Project Status](PROJECT_STATUS.md) and the [Roadmap](ROADMAP.md)
+V4.1–V4.8 are complete; Search V4 is complete. The next priority is returning to
+the Local Meme Explainer foundation. See [Project Status](PROJECT_STATUS.md) and the [Roadmap](ROADMAP.md)
 for the current checkpoint and agreed development order.
 
 ```text
@@ -42,9 +42,13 @@ If indexed results are insufficient:
 The template-search system includes a separate external template metadata index. The existing 41 local
 templates (base catalog plus approved imports) are not replaced or modified.
 
-1. `app.py` runs existing V1 lexical/fuzzy/semantic search against the local catalog.
-2. Only when no strong local evidence exists, a nonblank Home query searches the
-   external index. Strong local matches win even if filters subsequently hide them.
+1. Nonblank Home queries search both curated and external catalogs lexically,
+   requiring each candidate to qualify as strong, with semantic scoring disabled.
+2. Exact identities rank first, recovered names next, then strong context matches;
+   curated results win equal-confidence ties. Shared image URLs or provider/template
+   identities suppress duplicates, retaining the curated copy. Equal names or
+   keywords alone do not prove duplication. Only when both lexical searches abstain
+   can conservative curated then external semantic fallback run.
 3. If both tiers are empty, the existing explicit **Search web** action remains.
    Its session cache, query invalidation, source approval and bounded crawler are unchanged.
 4. Existing category/emotion filters apply after retrieval. External records
@@ -63,8 +67,10 @@ semantic expansion for short identity searches such as "men in black". Recovery
 returns at most one result at the existing similarity threshold **0.64** and
 runner-up margin **0.025**. Weak, ambiguous, nonfinite, out-of-range or foreign
 results abstain; model failure also leaves the explicit web fallback available.
-Strong lexical results never trigger this semantic fallback. Curated routing
-and its strict confidence gate remain unchanged.
+Strong lexical results from either catalog prevent this semantic fallback.
+Query-only Hinglish handling recognizes `me`/`mein` in a contextual `do + noun`
+construction when a plural noun is supported by catalog names/aliases;
+ordinary English `do`/`me` uses are preserved. No per-meme mapping is used.
 
 The same `semantic_scores()` implementation, BGE model, document-embedding cache
 and query cache serve both catalogs. The complete stable external document set
@@ -78,7 +84,7 @@ requires an existing exact-name/alias tier, the existing strong exact-context
 tier (60% exact coverage plus phrase/coherence), unambiguous recovered-name
 evidence (similarity at least 82, margin at least 5), or explicit short-query
 support for every useful token under the existing typo rules. Scattered weak
-lexical evidence and semantic-only matches cannot stop fallback. Semantics can
+lexical evidence cannot stop fallback. Outside combined Home routing, semantics can
 still reorder results after strong lexical evidence qualifies a tier. The
 default `search_memes()` behavior remains available to existing non-routing callers.
 
@@ -291,14 +297,21 @@ or inference of missing template-specific facts was added.
 The live crawler still has its existing total budget of 2 pages/4 images, normally
 split as 1 page/2 images per approved source. No crawler expansion was used here.
 
-The current milestone is V4.8: a reproducible offline benchmark covering exact names,
+The completed V4.8 milestone provides a reproducible offline benchmark covering exact names,
 aliases, descriptions, situations, finished-meme captions, typos, Hinglish-lite,
 ambiguous queries, and correct abstention for irrelevant/nonsense queries.
-After V4.8, work returns to the paused Local Meme Explainer foundation; the full
+Next, work returns to the paused Local Meme Explainer foundation; the full
 chatbot remains a separate later design discussion. Follow the agreed
 [Roadmap](ROADMAP.md). Permanent catalog entry still requires human approval.
 
 ## Offline evaluation (V4.8)
+
+Status: COMPLETE (27 September 2026). Search V4 is complete.
+The unchanged benchmark passes 34/34: Top-1 accuracy 100% (26/26), mean Top-3
+recall 100%, abstention 100% (8/8), and Noise@3 0% (0/28 returned slots).
+Full pytest result: 544 passed, 1384 subtests passed. All four original baseline
+failures are resolved; the original 30/34 measurements remain recorded in
+[Project Status](PROJECT_STATUS.md) for comparison.
 
 Run from the repository root:
 
@@ -322,7 +335,13 @@ The profile `offline-lexical-curated-and-fixture-v1` calls existing
 curated lexical path and finished-meme ranking independently. It excludes
 semantic models, imported/external templates, combined UI routing, filters,
 and live discovery. It is not a full production hybrid-search quality claim.
-No ranking code or thresholds are changed. Unit tests guard against network
+The evaluator itself does not alter ranking. V4.8 follow-up fixes add query-only
+Hinglish-lite fallback after ordinary abstention, then unique complete embedded
+catalog-name/alias recovery with supported surrounding context. That recovery
+rejects negation, competing identities, and unexplained context. Finished search
+suppresses partial-coverage results when the leader covers all query tokens,
+preserving exact captions and equally supported alternatives. No benchmark cases
+or production data were changed. Unit tests guard against network
 and model calls and verify repeatability and unchanged input files.
 
 Metric definitions:
