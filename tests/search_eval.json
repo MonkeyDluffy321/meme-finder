@@ -1,0 +1,367 @@
+{
+  "version": 1,
+  "templates": "../data/memes.json",
+  "finished_index": "fixtures/search_eval_memes.json",
+  "cases": [
+    {
+      "id": "exact_names-01",
+      "category": "exact_names",
+      "target": "templates",
+      "query": "Distracted Boyfriend",
+      "relevant_ids": [
+        "distracted-boyfriend"
+      ],
+      "abstain": false,
+      "rationale": "Exact curated name."
+    },
+    {
+      "id": "exact_names-02",
+      "category": "exact_names",
+      "target": "templates",
+      "query": "Two Buttons",
+      "relevant_ids": [
+        "two-buttons"
+      ],
+      "abstain": false,
+      "rationale": "Exact curated name."
+    },
+    {
+      "id": "exact_names-03",
+      "category": "exact_names",
+      "target": "templates",
+      "query": "Success Kid",
+      "relevant_ids": [
+        "success-kid"
+      ],
+      "abstain": false,
+      "rationale": "Exact curated name."
+    },
+    {
+      "id": "exact_names-04",
+      "category": "exact_names",
+      "target": "templates",
+      "query": "UNO Draw 25",
+      "relevant_ids": [
+        "uno-draw-25"
+      ],
+      "abstain": false,
+      "rationale": "Exact curated name."
+    },
+    {
+      "id": "aliases-01",
+      "category": "aliases",
+      "target": "templates",
+      "query": "Drakeposting",
+      "relevant_ids": [
+        "drake-hotline-bling"
+      ],
+      "abstain": false,
+      "rationale": "Explicit curated alias."
+    },
+    {
+      "id": "aliases-02",
+      "category": "aliases",
+      "target": "templates",
+      "query": "Galaxy Brain",
+      "relevant_ids": [
+        "expanding-brain"
+      ],
+      "abstain": false,
+      "rationale": "Explicit curated alias."
+    },
+    {
+      "id": "aliases-03",
+      "category": "aliases",
+      "target": "templates",
+      "query": "Smudge the Cat",
+      "relevant_ids": [
+        "woman-yelling-at-a-cat"
+      ],
+      "abstain": false,
+      "rationale": "Explicit curated alias."
+    },
+    {
+      "id": "descriptions-01",
+      "category": "descriptions",
+      "target": "templates",
+      "query": "guy looking at another girl",
+      "relevant_ids": [
+        "distracted-boyfriend"
+      ],
+      "abstain": false,
+      "rationale": "Visual description supported by curated metadata."
+    },
+    {
+      "id": "descriptions-02",
+      "category": "descriptions",
+      "target": "templates",
+      "query": "painful forced smile",
+      "relevant_ids": [
+        "hide-the-pain-harold"
+      ],
+      "abstain": false,
+      "rationale": "Visual description supported by curated metadata."
+    },
+    {
+      "id": "descriptions-03",
+      "category": "descriptions",
+      "target": "templates",
+      "query": "cartoon dog sits calmly with a drink",
+      "relevant_ids": [
+        "this-is-fine"
+      ],
+      "abstain": false,
+      "rationale": "Visual description supported by curated metadata."
+    },
+    {
+      "id": "situations-01",
+      "category": "situations",
+      "target": "templates",
+      "query": "choosing between two conflicting options",
+      "relevant_ids": [
+        "two-buttons"
+      ],
+      "abstain": false,
+      "rationale": "Situation stated in curated metadata."
+    },
+    {
+      "id": "situations-02",
+      "category": "situations",
+      "target": "templates",
+      "query": "pretending everything is okay",
+      "relevant_ids": [
+        "this-is-fine"
+      ],
+      "abstain": false,
+      "rationale": "Situation stated in curated metadata."
+    },
+    {
+      "id": "situations-03",
+      "category": "situations",
+      "target": "templates",
+      "query": "avoiding failure by never trying",
+      "relevant_ids": [
+        "roll-safe"
+      ],
+      "abstain": false,
+      "rationale": "Situation stated in curated metadata."
+    },
+    {
+      "id": "finished_captions-01",
+      "category": "finished_captions",
+      "target": "finished",
+      "query": "Pizza or tacos?",
+      "relevant_ids": [
+        "food"
+      ],
+      "abstain": false,
+      "rationale": "Caption evidence from test_meme_search.py fixtures."
+    },
+    {
+      "id": "finished_captions-02",
+      "category": "finished_captions",
+      "target": "finished",
+      "query": "Planting seeds of doubt",
+      "relevant_ids": [
+        "doubt"
+      ],
+      "abstain": false,
+      "rationale": "Caption evidence from test_meme_search.py fixtures."
+    },
+    {
+      "id": "finished_captions-03",
+      "category": "finished_captions",
+      "target": "finished",
+      "query": "Sleep or another episode?",
+      "relevant_ids": [
+        "sleep"
+      ],
+      "abstain": false,
+      "rationale": "Caption evidence from test_meme_search.py fixtures."
+    },
+    {
+      "id": "finished_captions-04",
+      "category": "finished_captions",
+      "target": "finished",
+      "query": "seeds doubt",
+      "relevant_ids": [
+        "doubt"
+      ],
+      "abstain": false,
+      "rationale": "Caption evidence from test_meme_search.py fixtures."
+    },
+    {
+      "id": "situations-04",
+      "category": "situations",
+      "target": "finished",
+      "query": "can't decide what to eat",
+      "relevant_ids": [
+        "food"
+      ],
+      "abstain": false,
+      "rationale": "Fixture situation about choosing food."
+    },
+    {
+      "id": "typos-01",
+      "category": "typos",
+      "target": "templates",
+      "query": "Dittaced boyfrien",
+      "relevant_ids": [
+        "distracted-boyfriend"
+      ],
+      "abstain": false,
+      "rationale": "Misspelled identity; expected identity is unchanged."
+    },
+    {
+      "id": "typos-02",
+      "category": "typos",
+      "target": "templates",
+      "query": "distrcted",
+      "relevant_ids": [
+        "distracted-boyfriend"
+      ],
+      "abstain": false,
+      "rationale": "Misspelled identity; expected identity is unchanged."
+    },
+    {
+      "id": "typos-03",
+      "category": "typos",
+      "target": "templates",
+      "query": "surprised pikchu",
+      "relevant_ids": [
+        "surprised-pikachu"
+      ],
+      "abstain": false,
+      "rationale": "Misspelled identity; expected identity is unchanged."
+    },
+    {
+      "id": "hinglish_lite-01",
+      "category": "hinglish_lite",
+      "target": "templates",
+      "query": "do buttons mein choice",
+      "relevant_ids": [
+        "two-buttons"
+      ],
+      "abstain": false,
+      "rationale": "Human-authored mixed Hindi/English intent; no translation support assumed."
+    },
+    {
+      "id": "hinglish_lite-02",
+      "category": "hinglish_lite",
+      "target": "templates",
+      "query": "sab jal raha hai but this is fine",
+      "relevant_ids": [
+        "this-is-fine"
+      ],
+      "abstain": false,
+      "rationale": "Human-authored mixed Hindi/English intent; no translation support assumed."
+    },
+    {
+      "id": "hinglish_lite-03",
+      "category": "hinglish_lite",
+      "target": "templates",
+      "query": "harold dard wali smile",
+      "relevant_ids": [
+        "hide-the-pain-harold"
+      ],
+      "abstain": false,
+      "rationale": "Human-authored mixed Hindi/English intent; no translation support assumed."
+    },
+    {
+      "id": "ambiguous-01",
+      "category": "ambiguous",
+      "target": "finished",
+      "query": "two buttons",
+      "relevant_ids": [
+        "food",
+        "sleep"
+      ],
+      "abstain": false,
+      "rationale": "Both caption variants share this template; either may rank first, both are relevant."
+    },
+    {
+      "id": "ambiguous-02",
+      "category": "ambiguous",
+      "target": "finished",
+      "query": "seeds",
+      "relevant_ids": [
+        "doubt",
+        "garden"
+      ],
+      "abstain": false,
+      "rationale": "Caption and gardening topic are both relevant interpretations."
+    },
+    {
+      "id": "ambiguous-03",
+      "category": "ambiguous",
+      "target": "templates",
+      "query": "person",
+      "relevant_ids": [],
+      "abstain": true,
+      "rationale": "Underspecified identity with no meaningful supported match; abstain."
+    },
+    {
+      "id": "ambiguous-04",
+      "category": "ambiguous",
+      "target": "finished",
+      "query": "something",
+      "relevant_ids": [],
+      "abstain": true,
+      "rationale": "No meaningful caption or topic intent; abstain."
+    },
+    {
+      "id": "nonsense-01",
+      "category": "nonsense",
+      "target": "templates",
+      "query": "zxqv jklz",
+      "relevant_ids": [],
+      "abstain": true,
+      "rationale": "No relevant record in the curated corpus."
+    },
+    {
+      "id": "nonsense-02",
+      "category": "nonsense",
+      "target": "templates",
+      "query": "quantum spaceship",
+      "relevant_ids": [],
+      "abstain": true,
+      "rationale": "No relevant record in the curated corpus."
+    },
+    {
+      "id": "nonsense-03",
+      "category": "nonsense",
+      "target": "templates",
+      "query": "weather forecast Paris",
+      "relevant_ids": [],
+      "abstain": true,
+      "rationale": "No relevant record in the curated corpus."
+    },
+    {
+      "id": "nonsense-04",
+      "category": "nonsense",
+      "target": "finished",
+      "query": "zzqxvv",
+      "relevant_ids": [],
+      "abstain": true,
+      "rationale": "No meaningful matching fixture; incidental token overlap is insufficient."
+    },
+    {
+      "id": "nonsense-05",
+      "category": "nonsense",
+      "target": "finished",
+      "query": "pizza zzqxvv",
+      "relevant_ids": [],
+      "abstain": true,
+      "rationale": "No meaningful matching fixture; incidental token overlap is insufficient."
+    },
+    {
+      "id": "nonsense-06",
+      "category": "nonsense",
+      "target": "finished",
+      "query": "weather forecast Paris",
+      "relevant_ids": [],
+      "abstain": true,
+      "rationale": "No meaningful matching fixture; incidental token overlap is insufficient."
+    }
+  ]
+}

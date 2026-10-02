@@ -1,6 +1,12 @@
 # Meme Finder
 
-## Search Engine V4 foundation (V4.1–V4.6)
+## Search Engine V4 (V4.1–V4.8 complete)
+
+V4.8 completes the search-quality milestone with a reproducible offline
+benchmark covering exact names, aliases, descriptions, situations, finished-meme
+captions, typos, Hinglish-lite queries, ambiguous queries, and correct abstention
+for irrelevant/nonsense queries. See [Project Status](docs/PROJECT_STATUS.md) and
+the [Roadmap](docs/ROADMAP.md) for the current development checkpoint.
 
 V4 is designed to search both **meme templates** and **recurring/known finished
 memes**, not every meme ever posted online. V4.1 adds the finished-meme data
@@ -10,7 +16,7 @@ Empty groups are hidden. Both ranking engines and existing template cards remain
 unchanged; category/emotion filters apply only to templates. Finished memes need
 no template identity and do not appear in the account libraries.
 
-`data/meme_instances.json` is a separate versioned index, initially empty.
+`data/meme_instances.json` is a separate versioned index with 19 reviewed records.
 `utils/meme_index.py` validates and normalizes provider-independent records:
 `meme_id`, `provider`, `caption_text`, derived `normalized_caption`, optional
 `template_id`/`template_name`, `topics`, `situation`, `language`, `image_url`,
@@ -118,8 +124,12 @@ The external Gemini explainer was removed. The **local Meme Explainer foundation
 explains finished memes using corrected captions first, then OCR, optional
 reliable template metadata and local search to give grounded,
 rule-based answers without external AI APIs, keys or network model calls.
-Search Engine V3, accounts, libraries and the creator/editor retain their
-existing behavior.
+With Search V4.8 complete, resuming this foundation on
+`feature/local-meme-explainer` is the next development priority.
+The full chatbot is a separate later design discussion. Local OCR, upload
+normalization, template identification, metadata and related meme retrieval remain
+available. Existing template search, accounts, libraries and the creator/editor
+retain their existing behavior.
 
 ## Local image analysis setup and use
 
@@ -385,7 +395,7 @@ preview handling, authentication, profiles, library operations, and Streamlit
 interactions. Authentication and library tests use mocked clients; they do not
 validate a live Supabase project's RLS policies.
 
-V3 tests cover upload formats/limits/orientation, OCR failures, hash and visual
+Local image analysis tests cover upload formats/limits/orientation, OCR failures, hash and visual
 matching decisions, cache preparation/reuse, metadata fidelity, deduplication,
 partial failures, upload replacement/clearing and Streamlit result rendering.
 Generic provider tests cover corrected OCR, reliable hint selection, explicit
@@ -406,9 +416,10 @@ local automated tests separately cover application behavior with mocked services
 
 ## Future roadmap
 
-- Meme creation and remixing.
+- Creator 2.0 improvements to existing meme creation and remixing.
 - Video/GIF support.
 - Future GIF and sticker discovery and creation features.
 
-These are future features and are not part of V3. The sidebar Explore and Categories navigation entries
+These are later roadmap tracks after Search V4.8 and the return to the Local Meme
+Explainer foundation. The sidebar Explore and Categories navigation entries
 are disabled placeholders; the category filters described above are available.

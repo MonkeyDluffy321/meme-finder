@@ -62,4 +62,8 @@ def search_finished_memes(query, *, index_path=INDEX_PATH, limit=20):
             reference.get("source_confidence"), 0) for reference in row["provenance"]), default=0)
         ranked.append(((-exact, -coverage, -score, -confidence, row["instance_key"]), row))
     ranked.sort(key=lambda item: item[0])
+    # With complete leader coverage, any lower coverage is a strict subset of
+    # its matched query tokens. Preserve exact captions and full-coverage ties.
+    if ranked and ranked[0][0][1] == -1:
+        ranked = [item for item in ranked if item[0][0] == -1 or item[0][1] == -1]
     return deepcopy([row for _, row in ranked[:limit]])

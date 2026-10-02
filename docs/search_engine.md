@@ -1,13 +1,54 @@
 # Meme Finder search engine
 
-## Architecture and pipeline
+## Search Engine V4 current architecture
 
-Phase 1 adds a separate external template metadata index. The existing 41 local
+Last updated: 2 October 2026
+
+Search Engine V4 extends the existing template-search system so Meme Finder can
+search two distinct content types:
+
+1. meme templates;
+2. known/finished captioned memes.
+
+The two datasets and ranking systems remain separate.
+
+V4.1–V4.8 are complete; Search V4 is complete. The next priority is returning to
+the Local Meme Explainer foundation. See [Project Status](PROJECT_STATUS.md) and the [Roadmap](ROADMAP.md)
+for the current checkpoint and agreed development order.
+
+```text
+User query
+    |
+    +--> Finished-meme index
+    |       |
+    |       +--> caption
+    |       +--> topics
+    |       +--> situation
+    |       +--> optional template context
+    |
+    +--> Template search
+            |
+            +--> curated catalog
+            +--> external template index
+            +--> lexical / conservative semantic retrieval
+
+If indexed results are insufficient:
+    |
+    +--> explicit bounded live-web discovery
+```
+
+## Template-search architecture and pipeline
+
+The template-search system includes a separate external template metadata index. The existing 41 local
 templates (base catalog plus approved imports) are not replaced or modified.
 
-1. `app.py` runs existing V1 lexical/fuzzy/semantic search against the local catalog.
-2. Only when no strong local evidence exists, a nonblank Home query searches the
-   external index. Strong local matches win even if filters subsequently hide them.
+1. Nonblank Home queries search both curated and external catalogs lexically,
+   requiring each candidate to qualify as strong, with semantic scoring disabled.
+2. Exact identities rank first, recovered names next, then strong context matches;
+   curated results win equal-confidence ties. Shared image URLs or provider/template
+   identities suppress duplicates, retaining the curated copy. Equal names or
+   keywords alone do not prove duplication. Only when both lexical searches abstain
+   can conservative curated then external semantic fallback run.
 3. If both tiers are empty, the existing explicit **Search web** action remains.
    Its session cache, query invalidation, source approval and bounded crawler are unchanged.
 4. Existing category/emotion filters apply after retrieval. External records
@@ -26,8 +67,10 @@ semantic expansion for short identity searches such as "men in black". Recovery
 returns at most one result at the existing similarity threshold **0.64** and
 runner-up margin **0.025**. Weak, ambiguous, nonfinite, out-of-range or foreign
 results abstain; model failure also leaves the explicit web fallback available.
-Strong lexical results never trigger this semantic fallback. Curated routing
-and its strict confidence gate remain unchanged.
+Strong lexical results from either catalog prevent this semantic fallback.
+Query-only Hinglish handling recognizes `me`/`mein` in a contextual `do + noun`
+construction when a plural noun is supported by catalog names/aliases;
+ordinary English `do`/`me` uses are preserved. No per-meme mapping is used.
 
 The same `semantic_scores()` implementation, BGE model, document-embedding cache
 and query cache serve both catalogs. The complete stable external document set
@@ -41,7 +84,7 @@ requires an existing exact-name/alias tier, the existing strong exact-context
 tier (60% exact coverage plus phrase/coherence), unambiguous recovered-name
 evidence (similarity at least 82, margin at least 5), or explicit short-query
 support for every useful token under the existing typo rules. Scattered weak
-lexical evidence and semantic-only matches cannot stop fallback. Semantics can
+lexical evidence cannot stop fallback. Outside combined Home routing, semantics can
 still reorder results after strong lexical evidence qualifies a tier. The
 default `search_memes()` behavior remains available to existing non-routing callers.
 
@@ -254,9 +297,82 @@ or inference of missing template-specific facts was added.
 The live crawler still has its existing total budget of 2 pages/4 images, normally
 split as 1 page/2 images per approved source. No crawler expansion was used here.
 
-Only Phase 1 was specified in the repository/task. Subsequent fixed-roadmap phase
-names and order have not been supplied. Follow-on capabilities to schedule are:
-additional provider coverage and refresh/removal policy; relevance evaluation and
-richer metadata; provenance/moderation and visual deduplication; and a larger
-indexed storage backend if measured scale requires it. None are implemented by
-this change, and none should bypass human approval for permanent catalog entry.
+The completed V4.8 milestone provides a reproducible offline benchmark covering exact names,
+aliases, descriptions, situations, finished-meme captions, typos, Hinglish-lite,
+ambiguous queries, and correct abstention for irrelevant/nonsense queries.
+Next, work returns to the paused Local Meme Explainer foundation; the full
+chatbot remains a separate later design discussion. Follow the agreed
+[Roadmap](ROADMAP.md). Permanent catalog entry still requires human approval.
+
+## Offline evaluation (V4.8)
+
+Status: COMPLETE. Search V4.8 is merged to `main` via PR #27; `main` is the
+completed Search V4 checkpoint (2 October 2026). The persistent application index
+`data/meme_instances.json` contains 19 reviewed finished-meme records.
+The unchanged benchmark passes 34/34: Top-1 accuracy 100% (26/26), mean Top-3
+recall 100%, abstention 100% (8/8), and Noise@3 0% (0/28 returned slots).
+Final full pytest result: 555 passed, 1,396 subtests passed. All four original baseline
+failures are resolved; the original 30/34 measurements remain recorded in
+[Project Status](PROJECT_STATUS.md) for comparison.
+
+Run from the repository root:
+
+```powershell
+.\.venv\Scripts\python.exe -m utils.search_eval
+.\.venv\Scripts\python.exe -m utils.search_eval --json
+.\.venv\Scripts\python.exe -m pytest tests/test_search_eval.py -q
+```
+
+`tests/search_eval.json` contains 34 judged cases across all nine benchmark
+categories. Each case names its target (`templates` or `finished`), relevant IDs,
+explicit abstention expectation, and judgment rationale. Template cases use all
+40 records in `data/memes.json`. The four isolated finished records in
+`tests/fixtures/search_eval_memes.json` reproduce the synthetic fixture from
+`tests/test_meme_search.py`; placeholder image URLs are never fetched. The
+application finished-meme index is neither read nor populated by the runner.
+
+The profile `offline-lexical-curated-and-fixture-v1` calls existing
+`search_memes(..., use_semantic=False, require_strong=True)` and
+`search_finished_memes(..., index_path=fixture, limit=20)`. This measures the
+curated lexical path and finished-meme ranking independently. It excludes
+semantic models, imported/external templates, combined UI routing, filters,
+and live discovery. It is not a full production hybrid-search quality claim.
+The evaluator itself does not alter ranking. V4.8 follow-up fixes add query-only
+Hinglish-lite fallback after ordinary abstention, then unique complete embedded
+catalog-name/alias recovery with supported surrounding context. That recovery
+rejects negation, competing identities, and unexplained context. Finished search
+suppresses partial-coverage results when the leader covers all query tokens,
+preserving exact captions and equally supported alternatives. No benchmark cases
+or production data were changed. Unit tests guard against network
+and model calls and verify repeatability and unchanged input files.
+
+Metric definitions:
+
+- Top-1 accuracy: fraction of positive cases whose first result is relevant.
+- Top-3 recall: mean fraction of each positive case's relevant IDs found in its
+  first three results. Multiple relevant IDs are supported; either may rank first.
+- Abstention accuracy: fraction of abstention cases returning no results.
+- Noise@3: irrelevant returned slots divided by all returned slots in the first
+  three results, pooled across positive and abstention cases. Short lists are
+  not padded. All unlisted IDs in the judged group count as irrelevant.
+- A positive case passes only with a relevant first result, complete recall@3,
+  and zero noise@3. An abstention case passes only with an empty result list.
+  Undefined denominators display as N/A (`null` in JSON), not perfect scores.
+
+Reports include overall, category and target metrics, failed queries with
+expected/returned IDs, and SHA256 fingerprints of the dataset and both corpora.
+JSON also includes every case result and metric denominators. Dataset paths
+resolve relative to the dataset file. Invalid or missing expected identities
+fail validation instead of silently disappearing from the benchmark.
+The default CLI exits successfully after measurement even if quality cases fail;
+`--fail-on-failure` exits 1 for any failed judgment. Infrastructure errors remain
+errors. Evaluator tests check scoring correctness without demanding perfect
+search quality or locking in the current failures.
+
+This is a small, manually judged baseline, not an exhaustive relevance dataset.
+Hinglish cases express intended matches without assuming translation support;
+ambiguous cases include both multiple valid matches and justified abstention.
+Blank browsing queries are excluded. Changes to corpus contents/order, judgments,
+ranking code or dependency versions can change measurements; compare the same
+repository revision/environment and input fingerprints. See
+[Project Status](PROJECT_STATUS.md) for measured results and the next task.

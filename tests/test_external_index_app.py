@@ -33,11 +33,21 @@ class ExternalIndexAppTests(unittest.TestCase):
         self.web.assert_not_called()
         self.assertFalse(any(button.key == "search_web" for button in self.app.button))
 
-    def test_curated_priority_and_blank_browse_skip_index(self):
-        for query in ("", "Drakeposting", "Success Kid"):
-            self.query(query)
+    def test_combined_lexical_results_and_blank_browse_skip_index(self):
+        self.query("")
         self.index.assert_not_called()
-        self.external_preview.assert_not_called()
+        for query in ("Drakeposting", "Success Kid"):
+            self.query(query)
+        self.assertEqual(self.index.call_count, 2)
+        self.assertTrue(all(call.kwargs == {"lexical_only": True}
+                            for call in self.index.call_args_list))
+        # Finished records now share this preview loader; template mirrors must
+        # still be removed, while persisted finished memes may render.
+        from utils.meme_index import load_index
+        finished_urls = {row["image_url"] for row in load_index()}
+        self.assertTrue(all(call.args[0] in finished_urls
+                            for call in self.external_preview.call_args_list))
+        self.semantic.assert_not_called()
         self.web.assert_not_called()
 
     def test_doge_case_insensitive_external_result(self):

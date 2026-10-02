@@ -11,6 +11,11 @@ APP_PATH = Path(__file__).resolve().parents[1] / "app.py"
 
 
 class AppTests(unittest.TestCase):
+    def setUp(self):
+        external_preview = patch("utils.images.load_external_preview", return_value=None)
+        external_preview.start()
+        self.addCleanup(external_preview.stop)
+
     @patch("utils.images.load_preview", return_value=None)
     def test_irregular_queries_through_real_app_search_path(self, preview):
         from utils.search import search_memes
@@ -40,7 +45,8 @@ class AppTests(unittest.TestCase):
         app.text_input[0].set_value("2 choices").run()
         self.assertFalse(app.exception)
         headings = [h.value for h in app.subheader]
-        self.assertLess(headings.index("Two Buttons"), headings.index("Drake Hotline Bling"))
+        self.assertIn("Two Buttons", headings)
+        self.assertNotIn("Drake Hotline Bling", headings)  # Weak incidental overlap is excluded.
         app.button(key="details-two-buttons").click().run()
         text = "\n".join(item.value for item in app.markdown)
         self.assertIn("Struggling to choose", text)

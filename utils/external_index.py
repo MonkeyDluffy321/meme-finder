@@ -171,7 +171,7 @@ def _load(path, modified, size):
     return records, exact
 
 
-def search_external_templates(query, *, index_path=INDEX_PATH):
+def search_external_templates(query, *, index_path=INDEX_PATH, lexical_only=False, semantic_only=False):
     """Strict lexical first, then confident descriptive semantic recovery."""
     if not query.strip():
         return []
@@ -180,8 +180,13 @@ def search_external_templates(query, *, index_path=INDEX_PATH):
         stat = path.stat()
         records, exact = _load(str(path), stat.st_mtime_ns, stat.st_size)
         pool = exact.get(tuple(normalized_words(query)), records)
-        results = search_memes(pool, query, use_semantic=False, require_strong=True)
-        if not results and len(normalized_words(query)) >= 4:
+        if semantic_only:
+            results = []
+        elif lexical_only:
+            results = search_memes(pool, query, use_semantic=False, require_strong=True, strong_only=True)
+        else:
+            results = search_memes(pool, query, use_semantic=False, require_strong=True)
+        if not lexical_only and not results and len(normalized_words(query)) >= 4:
             results = semantic.semantic_fallback(records, query, min_content_words=2)
         return deepcopy(results)
     except (OSError, ValueError, TypeError):
