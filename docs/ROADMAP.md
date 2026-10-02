@@ -1,6 +1,6 @@
 # Meme Finder — Development Roadmap
 
-Last updated: 27 September 2026
+Last updated: 2 October 2026
 
 This document defines the agreed development order for Meme Finder.
 
@@ -61,7 +61,7 @@ Current completed work:
 - Basic question intents.
 - Related meme/template suggestions.
 - No external explanation API required.
-- Current Search V4 main merged into branch.
+- Then-current Search V4 main merged into branch at its paused checkpoint.
 - Integration regression suite:
   - 546 tests passed
   - 1366 subtests passed
@@ -234,9 +234,9 @@ Measure:
 
 The benchmark must not depend on live network results.
 
-Completion checkpoint (27 September 2026): the unchanged offline benchmark passes
+Post-merge checkpoint (2 October 2026, PR #27 merged to main): the frozen offline benchmark passes
 34/34, with Top-1 accuracy, Top-3 recall and abstention accuracy all 100%, and
-Noise@3 0%. The full pytest suite passed: 544 tests, 1384 subtests.
+Noise@3 0%. The final full pytest suite passed: 555 tests, 1,396 subtests.
 Search V4 is complete. These measurements cover the curated lexical/finished
 fixture profile; broader hybrid-search quality remains outside this benchmark.
 The next priority is returning to the Local Meme Explainer foundation.

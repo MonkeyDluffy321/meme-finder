@@ -1,6 +1,6 @@
 # Meme Finder — Local Meme Explainer
 
-Last updated: 23 September 2026
+Last updated: 2 October 2026
 
 This document describes the current local Meme Explainer foundation.
 
@@ -108,7 +108,7 @@ This confirms:
 
 ## Search V4 integration plan
 
-After Search V4.8 is completed, the explainer foundation should gain stronger
+Search V4.8 is complete on `main`; the explainer foundation is next to gain stronger
 retrieval context.
 
 Planned flow:
@@ -167,15 +167,15 @@ Current explainer development branch:
 
 `feature/local-meme-explainer`
 
-The latest checkpoint includes current Search V4 main merged into the branch.
+The paused checkpoint includes the then-current Search V4 main merged into the branch.
 
 Verified regression result:
 
 - 546 tests passed
 - 1366 subtests passed
 
-The branch has been pushed to GitHub and is intentionally paused while Search V4.8
-is completed.
+The branch was pushed to GitHub and paused for Search V4.8. Search V4.8 is now
+complete on `main`; resuming this foundation is the next development priority.
 
 ## Related files
 
@@ -194,9 +194,7 @@ Tests for the explainer and intelligence pipeline live under `tests/`.
 
 ## Next explainer milestone
 
-Do not resume explainer feature development yet.
-
-After Search V4.8:
+Resume the foundation using the completed Search V4 checkpoint:
 
 1. connect the explainer to finished-meme retrieval;
 2. combine real meme evidence with template metadata;
