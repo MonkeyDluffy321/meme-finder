@@ -11,7 +11,7 @@ from utils.identification import Identification
 from utils.ocr import OCRResult
 from utils.local_explainer import explain_local
 
-CONTENT_KEYS = ("v3_validated", "v3_result", "v3_text", "v3_related", "v3_explanation", "v3_question")
+CONTENT_KEYS = ("v3_validated", "v3_result", "v3_text", "v3_text_corrected", "v3_related", "v3_explanation", "v3_question")
 
 
 def clear_image():
@@ -26,6 +26,11 @@ def discard_related():
     # A changed caption invalidates prior results.
     st.session_state.pop("v3_related", None)
     st.session_state.pop("v3_explanation", None)
+
+
+def caption_changed():
+    st.session_state.v3_text_corrected = True
+    discard_related()
 
 
 def render_metadata(matched):
@@ -69,9 +74,13 @@ def render_intelligence(memes):
                 result = analyze(upload, memes)
             st.session_state.v3_result = result
             st.session_state.v3_text = result["ocr"].text
+            st.session_state.v3_text_corrected = False
             discard_related()
         result = st.session_state.get("v3_result", {
             "ocr": OCRResult("not_run"), "identification": Identification("unavailable"), "notices": []})
+        if result["ocr"].status != "not_run":
+            with st.expander("Raw OCR", expanded=False):
+                st.text(result["ocr"].text)
         st.markdown("**Visible text**")
         messages = {"not_run": "Read text locally above, or type it below.",
                     "empty": "No readable text detected. You can type a caption below.",
@@ -82,12 +91,12 @@ def render_intelligence(memes):
             st.caption(messages[result["ocr"].status])
         st.session_state.setdefault("v3_text", result["ocr"].text)
         st.text_area("Check or correct the visible text (optional)", key="v3_text", max_chars=5000,
-                     on_change=discard_related)
+                     on_change=caption_changed)
         st.text_input("Local question (optional)", key="v3_question", max_chars=500,
                       placeholder="What does this meme mean?", on_change=discard_related)
         if st.button("Explain meme", key="v3_explain"):
             correction = st.session_state.v3_text
-            if correction == result["ocr"].text:
+            if correction == result["ocr"].text and not st.session_state.get("v3_text_corrected", False):
                 correction = None
             st.session_state.v3_explanation = explain_local(
                 result, memes, corrected_text=correction, question=st.session_state.v3_question)
@@ -110,6 +119,8 @@ def render_intelligence(memes):
                 st.text("Related collection suggestions (not image identifications):\n" +
                         "\n".join(meme["name"] for meme in explanation.related))
             st.caption(explanation.uncertainty)
+            if explanation.intent != "similar" and explanation.supporting_context:
+                st.text(explanation.supporting_context)
             if explanation.template_name:
                 st.text("Template: " + explanation.template_name + " (supporting context)")
         matched = reliable_template(result, memes)

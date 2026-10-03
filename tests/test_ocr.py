@@ -3,11 +3,25 @@ import unittest
 from unittest.mock import Mock, patch
 from PIL import Image
 
-from utils.ocr import extract_text
+from utils.ocr import extract_text, select_caption
 from utils import ocr
 
 
 class OCRTests(unittest.TestCase):
+    def test_caption_selection_excludes_only_isolated_numeric_lines(self):
+        cases = (
+            ("38\nME PLANTING SEEDS OF DOUBT\n50", "ME PLANTING SEEDS OF DOUBT"),
+            (" 38 \nME PLANTING SEEDS OF DOUBT\n50", "ME PLANTING SEEDS OF DOUBT"),
+            ("2006 Honda Civic\nTop 10 anime\nWindows 11", "2006 Honda Civic\nTop 10 anime\nWindows 11"),
+            ("Me: I need sleep\nAlso me: one more episode", "Me: I need sleep\nAlso me: one more episode"),
+            ("", ""),
+            ("38\n50", ""),
+            ("Windows\n11 reasons to upgrade", "Windows\n11 reasons to upgrade"),
+        )
+        for raw, expected in cases:
+            with self.subTest(raw=raw):
+                self.assertEqual(select_caption(raw), expected)
+
     def test_missing_engine(self):
         with patch("utils.ocr.get_engine", side_effect=ImportError()):
             self.assertEqual(extract_text(Image.new("RGB", (10, 10))).status, "unavailable")

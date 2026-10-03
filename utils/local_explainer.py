@@ -1,10 +1,13 @@
 """Deterministic explanations from local metadata and lexical retrieval only."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from copy import deepcopy
 import re
 
 from utils.explanations import explain, related_memes
 from utils.intelligence import reliable_template
+from utils.meme_search import search_finished_memes
+from utils.ocr import select_caption
 from utils.vision import Explanation, VisionResult
 
 
@@ -17,6 +20,41 @@ class LocalExplanation(Explanation):
     related: list[dict]
     intent: str
     answer: str
+    finished_evidence: list[dict]
+    supporting_context: str
+    raw_ocr_text: str = field(repr=False)
+
+
+def finished_examples(text):
+    """Bound local retrieval without changing its order or inferring identity."""
+    if not text.strip():
+        return []
+    rows = search_finished_memes(text, limit=3)
+    fields = ("caption_text", "situation", "topics", "template_name", "template_id",
+              "provider", "source_page", "source_confidence", "provenance")
+    return [deepcopy({key: row[key] for key in fields if key in row}) for row in rows[:3]]
+
+
+def format_finished_examples(examples):
+    if not examples:
+        return ""
+    lines = ["Retrieved finished-meme supporting examples (not proof of this image's "
+             "template identity, meaning, or joke correctness):"]
+    for index, example in enumerate(examples, 1):
+        lines.append(f"{index}. Caption: " + example.get("caption_text", ""))
+        for key, label in (("situation", "Situation"), ("topics", "Topics"),
+                           ("template_name", "Example template hint"),
+                           ("template_id", "Example template ID"), ("provider", "Source"),
+                           ("source_page", "Source page")):
+            value = example.get(key)
+            if value:
+                lines.append(label + ": " + (", ".join(value) if isinstance(value, list) else value))
+        for reference in example.get("provenance", []):
+            parts = [str(reference[key]) for key in ("provider", "meme_id", "source_page", "source_confidence")
+                     if reference.get(key)]
+            if parts:
+                lines.append("Provenance: " + " / ".join(parts))
+    return "\n".join(lines)
 
 
 def question_intent(question):
@@ -74,9 +112,14 @@ def explain_local(local_result, memes, corrected_text=None, question=""):
     """
     matched = reliable_template(local_result, memes)
     metadata = explain(matched) if matched else {}
-    text = corrected_text if corrected_text is not None else local_result["ocr"].text
+    raw_ocr_text = local_result["ocr"].text
+    text = corrected_text if corrected_text is not None else select_caption(raw_ocr_text)
     source = "User-corrected visible text" if corrected_text is not None else "Raw OCR (may contain errors)"
+    if corrected_text is None and text != raw_ocr_text:
+        source = "Selected OCR caption (numeric-only lines excluded; may contain errors)"
     related = related_memes(memes, matched, text)
+    finished_evidence = finished_examples(text)
+    supporting_context = format_finished_examples(finished_evidence)
     situations = list(metadata.get("situations", []))
     description = metadata.get("description") or "No reliable scene description is available."
     meaning = metadata.get("meaning") or "There is not enough reliable metadata to explain this meme's meaning."
@@ -113,6 +156,8 @@ def explain_local(local_result, memes, corrected_text=None, question=""):
                "\n".join(item["name"] + ": " + item.get("meaning", "") for item in related)
                if related else "No related collection matches were found from the available text or metadata.")
     intent = question_intent(question)
+    if supporting_context:
+        similar += "\n\n" + supporting_context
     answer = {"overview": expression, "meaning": expression, "humor": why,
               "usage": usage, "caption": caption, "similar": similar,
               "unsupported": "I can help with meaning, why it works, usage, visible text, or similar memes using local evidence."}[intent]
@@ -121,6 +166,8 @@ def explain_local(local_result, memes, corrected_text=None, question=""):
         wording=[caption], uncertainty=uncertainty,
         template_name=metadata.get("name") or None, situations=situations,
         visible_text=text, text_source=source, related=related, intent=intent, answer=answer,
+        finished_evidence=finished_evidence, supporting_context=supporting_context,
+        raw_ocr_text=raw_ocr_text,
     )
     status = "ok" if useful_text or (usable_caption and reliable_context) else "limited" if reliable_context else "abstained"
     return VisionResult(status, explanation)

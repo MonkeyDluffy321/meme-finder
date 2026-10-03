@@ -14,6 +14,11 @@ class OCRResult:
     text: str = ""
 
 
+def select_caption(raw_text):
+    """Exclude only isolated decimal-number lines; leave other OCR text intact."""
+    return "\n".join(line for line in raw_text.split("\n") if not line.strip().isdecimal())
+
+
 def get_engine():
     global _ENGINE
     # Failed initialization is retryable on the next explicit analysis.

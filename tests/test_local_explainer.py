@@ -7,6 +7,10 @@ from utils.identification import Identification
 from utils.local_explainer import explain_local, question_intent
 from utils.ocr import OCRResult
 from utils.vision import Explanation, VisionResult
+from utils.meme_search import search_finished_memes
+import json
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
 
 class LocalExplainerTests(unittest.TestCase):
@@ -141,7 +145,8 @@ class LocalExplainerTests(unittest.TestCase):
     def test_zero_network_model_or_secret_access(self):
         targets = ("socket.socket.connect", "socket.create_connection", "socket.getaddrinfo",
                    "utils.search.semantic_fallback", "utils.semantic.embed_texts",
-                   "utils.ocr.get_engine", "utils.template_index.embed_images")
+                   "utils.ocr.get_engine", "utils.template_index.embed_images",
+                   "utils.search_all.search_all", "utils.semantic.get_embedding_model")
         with ExitStack() as stack:
             guards = [stack.enter_context(patch(target, side_effect=AssertionError(target))) for target in targets]
             secrets = stack.enter_context(patch("streamlit.secrets"))
@@ -153,3 +158,150 @@ class LocalExplainerTests(unittest.TestCase):
             for guard in guards:
                 guard.assert_not_called()
             self.assertEqual(secrets.mock_calls, [])
+
+
+class FinishedEvidenceTests(unittest.TestCase):
+    def setUp(self):
+        self.local = {"ocr": OCRResult("ok", "raw OCR caption"),
+                      "identification": Identification("unknown")}
+        self.rows = [dict(caption_text=f"Retrieved caption {i}", situation=f"Situation {i}",
+                          topics=["choice", str(i)], template_name="Two Buttons", template_id="buttons",
+                          provider="fixture", source_page=f"https://example.org/{i}",
+                          provenance=[dict(provider="fixture", meme_id=str(i),
+                                           source_page=f"https://example.org/{i}", source_confidence="reported")],
+                          image_url="https://example.org/image.png", unexpected="discard")
+                     for i in (4, 2, 3, 1)]
+
+    def test_effective_caption_only_is_retrieval_query(self):
+        for correction in (None, "  I need a holiday\n "):
+            with self.subTest(correction=correction), patch(
+                    "utils.local_explainer.search_finished_memes", return_value=self.rows) as search:
+                result = explain_local(self.local, [], correction, "Show similar memes")
+                expected = self.local["ocr"].text if correction is None else correction
+                search.assert_called_once_with(expected, limit=3)
+                self.assertEqual(result.explanation.visible_text, expected)
+                self.assertNotIn("Retrieved caption", result.explanation.observations)
+
+    def test_selected_caption_reaches_explainer_and_retrieval_without_changing_ocr(self):
+        raw = "38\nME PLANTING SEEDS OF DOUBT\n50"
+        self.local["ocr"] = OCRResult("ok", raw)
+        before = deepcopy(self.local)
+        with patch("utils.local_explainer.search_finished_memes", return_value=[]) as search, \
+                patch("utils.local_explainer.related_memes", return_value=[]) as related:
+            result = explain_local(self.local, [], question="What does the caption say?")
+        caption = "ME PLANTING SEEDS OF DOUBT"
+        search.assert_called_once_with(caption, limit=3)
+        related.assert_called_once_with([], None, caption)
+        self.assertEqual(result.explanation.visible_text, caption)
+        self.assertEqual(result.explanation.raw_ocr_text, raw)
+        self.assertIn(caption, result.explanation.observations)
+        self.assertNotIn("38", result.explanation.observations)
+        self.assertEqual(self.local, before)
+
+    def test_corrections_bypass_automatic_caption_selection(self):
+        raw = "38\nME PLANTING SEEDS OF DOUBT\n50"
+        self.local["ocr"] = OCRResult("ok", raw)
+        for correction in ("I have 38 reasons\n50", raw, ""):
+            with self.subTest(correction=correction), patch(
+                    "utils.local_explainer.search_finished_memes", return_value=[]) as search:
+                result = explain_local(self.local, [], corrected_text=correction)
+                self.assertEqual(result.explanation.visible_text, correction)
+                self.assertEqual(result.explanation.raw_ocr_text, raw)
+                self.assertEqual(result.explanation.text_source, "User-corrected visible text")
+                if correction:
+                    search.assert_called_once_with(correction, limit=3)
+                else:
+                    search.assert_not_called()
+
+    def test_empty_or_insufficient_ocr_abstains_after_selection(self):
+        for raw in ("", "38\n50", "38\nx\n50"):
+            with self.subTest(raw=raw), patch("utils.local_explainer.search_finished_memes", return_value=[]) as search:
+                self.local["ocr"] = OCRResult("ok", raw)
+                result = explain_local(self.local, [])
+                self.assertEqual(result.status, "abstained")
+                self.assertEqual(result.explanation.raw_ocr_text, raw)
+                if raw != "38\nx\n50":
+                    search.assert_not_called()
+
+    def test_empty_correction_or_ocr_skips_retrieval(self):
+        for correction in ("", " \n\t", None):
+            with self.subTest(correction=correction), patch(
+                    "utils.local_explainer.search_finished_memes") as search:
+                if correction is None:
+                    self.local["ocr"] = OCRResult("empty")
+                result = explain_local(self.local, [], correction)
+                search.assert_not_called()
+                self.assertEqual(result.explanation.finished_evidence, [])
+                self.assertEqual(result.explanation.supporting_context, "")
+                self.assertEqual(result.status, "abstained")
+
+    def test_bound_order_context_provenance_and_copy_isolation(self):
+        before = deepcopy(self.rows)
+        with patch("utils.local_explainer.search_finished_memes", return_value=self.rows):
+            explanation = explain_local(self.local, [], question="Show similar memes").explanation
+        evidence = explanation.finished_evidence
+        self.assertEqual(len(evidence), 3)
+        self.assertEqual([r["caption_text"] for r in evidence],
+                         [r["caption_text"] for r in self.rows[:3]])
+        for actual, original in zip(evidence, self.rows):
+            for key in ("situation", "topics", "template_name", "template_id", "provider", "source_page", "provenance"):
+                self.assertEqual(actual[key], original[key])
+            self.assertNotIn("unexpected", actual)
+        self.assertIn(explanation.supporting_context, explanation.answer)
+        self.assertIn("not proof", explanation.answer)
+        self.assertIn("https://example.org/4", explanation.answer)
+        self.assertIn("Situation 4", explanation.answer)
+        self.assertIn("Topics: choice, 4", explanation.answer)
+        self.assertIn("Example template hint: Two Buttons", explanation.answer)
+        self.assertIn("Provenance:", explanation.answer)
+        evidence[0]["topics"].append("changed")
+        evidence[0]["provenance"][0]["provider"] = "changed"
+        self.assertEqual(self.rows, before)
+
+    def test_evidence_does_not_change_interpretation_identity_or_status(self):
+        for text in ("I need a holiday", "unfamiliar slang"):
+            for question in ("", "Why is it funny?", "When should I use it?", "What does the caption say?"):
+                with self.subTest(text=text, question=question):
+                    with patch("utils.local_explainer.search_finished_memes", return_value=[]):
+                        baseline = explain_local(self.local, [], text, question)
+                    with patch("utils.local_explainer.search_finished_memes", return_value=self.rows):
+                        result = explain_local(self.local, [], text, question)
+                    self.assertEqual(result.status, baseline.status)
+                    for field in ("visible_text", "text_source", "template_name", "situations", "observations",
+                                  "expression", "why_it_works", "wording", "uncertainty", "answer"):
+                        self.assertEqual(getattr(result.explanation, field), getattr(baseline.explanation, field))
+
+    def test_real_search_missing_index_abstains_without_changing_explanation(self):
+        with TemporaryDirectory() as temp:
+            path = Path(temp) / "missing.json"
+            with patch("utils.local_explainer.search_finished_memes", side_effect=
+                       lambda text, limit: search_finished_memes(text, index_path=path, limit=limit)):
+                result = explain_local(self.local, [], "unfamiliar slang", "Show similar memes")
+        self.assertEqual(result.status, "abstained")
+        self.assertEqual(result.explanation.finished_evidence, [])
+        self.assertEqual(result.explanation.answer,
+                         "No related collection matches were found from the available text or metadata.")
+
+    def test_real_search_offline_order_and_input_immutability(self):
+        with TemporaryDirectory() as temp:
+            path = Path(temp) / "instances.json"
+            rows = [dict(meme_id=str(i), provider="fixture", caption_text="I need a holiday",
+                         image_url=f"https://example.org/{i}.png", topics=["holiday"],
+                         situation="Taking time off", source_confidence="reported") for i in range(4)]
+            path.write_text(json.dumps({"version": 1, "records": rows}), encoding="utf-8")
+            before = path.read_bytes()
+            expected = search_finished_memes("I need a holiday", index_path=path, limit=3)
+            targets = ("socket.socket.connect", "socket.create_connection", "socket.getaddrinfo",
+                       "utils.search_all.search_all", "utils.semantic.embed_texts",
+                       "utils.semantic.get_embedding_model", "utils.ocr.get_engine",
+                       "utils.template_index.embed_images")
+            with ExitStack() as stack:
+                guards = [stack.enter_context(patch(t, side_effect=AssertionError(t))) for t in targets]
+                stack.enter_context(patch("utils.local_explainer.search_finished_memes", side_effect=
+                                         lambda text, limit: search_finished_memes(text, index_path=path, limit=limit)))
+                result = explain_local(self.local, [], "I need a holiday", "Show similar memes")
+                for guard in guards:
+                    guard.assert_not_called()
+            self.assertEqual([r["provenance"] for r in result.explanation.finished_evidence],
+                             [r["provenance"] for r in expected])
+            self.assertEqual(path.read_bytes(), before)

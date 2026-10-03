@@ -115,6 +115,76 @@ class IntelligenceAppTests(unittest.TestCase):
         clear_private_state(state)
         self.assertEqual(state, {"query": "cat", "v3_generation": 1})
 
+    def test_finished_evidence_display_and_invalidation(self):
+        buffer = BytesIO()
+        Image.new("RGB", (30, 30), "red").save(buffer, format="PNG")
+        evidence = [dict(caption_text="Supporting example caption", situation="Example situation",
+                         topics=["choice"], provider="fixture", provenance=[])]
+        with patch("utils.intelligence_ui.st.file_uploader", return_value=buffer) as uploader, \
+                patch("utils.local_explainer.search_finished_memes", return_value=evidence) as search:
+            app = AppTest.from_file(str(APP)).run()
+            search.assert_not_called()
+            app.text_area(key="v3_text").set_value("I need a holiday").run()
+            app.button(key="v3_explain").click().run()
+            self.assertFalse(app.exception)
+            self.assertEqual(app.session_state["v3_explanation"].explanation.finished_evidence, evidence)
+            self.assertTrue(any("Supporting example caption" in t.value for t in app.text))
+            app.text_area(key="v3_text").set_value("I need some rest").run()
+            self.assertNotIn("v3_explanation", app.session_state)
+            self.assertFalse(any("Supporting example caption" in t.value for t in app.text))
+            app.button(key="v3_explain").click().run()
+            search.assert_called_with("I need some rest", limit=3)
+            app.text_input(key="v3_question").set_value("Show similar memes").run()
+            self.assertNotIn("v3_explanation", app.session_state)
+            app.button(key="v3_explain").click().run()
+            self.assertIn("Supporting example caption", app.session_state["v3_explanation"].explanation.answer)
+            replacement = BytesIO()
+            Image.new("RGB", (30, 30), "blue").save(replacement, format="PNG")
+            uploader.return_value = replacement
+            app.run()
+            self.assertNotIn("v3_explanation", app.session_state)
+            self.assertFalse(any("Supporting example caption" in t.value for t in app.text))
+            app.text_area(key="v3_text").set_value("I need a holiday").run()
+            app.button(key="v3_explain").click().run()
+            self.assertTrue(app.session_state["v3_explanation"].explanation.finished_evidence)
+            app.button(key="v3_analyze").click().run()
+            self.assertNotIn("v3_explanation", app.session_state)
+            app.text_area(key="v3_text").set_value("I need a holiday").run()
+            app.button(key="v3_explain").click().run()
+            uploader.return_value = None
+            app.button(key="v3_clear").click().run()
+            self.assertNotIn("v3_explanation", app.session_state)
+            self.assertFalse(any("Supporting example caption" in t.value for t in app.text))
+            self.assertFalse(app.exception)
+
+    def test_raw_ocr_display_and_selected_caption_with_explicit_correction(self):
+        raw = "38\nME PLANTING SEEDS OF DOUBT\n50"
+        self.analyze.return_value["ocr"] = OCRResult("ok", raw)
+        buffer = BytesIO()
+        Image.new("RGB", (30, 30), "red").save(buffer, format="PNG")
+        with patch("utils.intelligence_ui.st.file_uploader", return_value=buffer), \
+                patch("utils.local_explainer.search_finished_memes", return_value=[]) as search:
+            app = AppTest.from_file(str(APP)).run()
+            app.button(key="v3_analyze").click().run()
+            self.assertEqual(app.text_area(key="v3_text").value, raw)
+            app.button(key="v3_explain").click().run()
+            search.assert_called_with("ME PLANTING SEEDS OF DOUBT", limit=3)
+            explanation = app.session_state["v3_explanation"].explanation
+            self.assertEqual(explanation.raw_ocr_text, raw)
+            self.assertEqual(explanation.visible_text, "ME PLANTING SEEDS OF DOUBT")
+            app.text_area(key="v3_text").set_value("I have 38 reasons").run()
+            app.text_area(key="v3_text").set_value(raw).run()
+            app.button(key="v3_explain").click().run()
+            search.assert_called_with(raw, limit=3)
+            self.assertEqual(app.session_state["v3_explanation"].explanation.text_source,
+                             "User-corrected visible text")
+            self.assertEqual(app.session_state["v3_result"]["ocr"].text, raw)
+            self.assertTrue(any(t.value == raw for t in app.text))
+            app.button(key="v3_analyze").click().run()
+            app.button(key="v3_explain").click().run()
+            search.assert_called_with("ME PLANTING SEEDS OF DOUBT", limit=3)
+            self.assertFalse(app.exception)
+
     def test_replacement_discards_previous_analysis(self):
         buffer = BytesIO()
         Image.new("RGB", (30, 30), "red").save(buffer, format="PNG")

@@ -121,11 +121,11 @@ name, description, emotion, or situation. The current collection contains
 Browse and search as a guest, or sign in to keep a personal meme library.
 
 The external Gemini explainer was removed. The **local Meme Explainer foundation**
-explains finished memes using corrected captions first, then OCR, optional
-reliable template metadata and local search to give grounded,
+explains finished memes using corrected captions first, then effective OCR captions,
+optional reliable template metadata and finished-meme supporting evidence to give grounded,
 rule-based answers without external AI APIs, keys or network model calls.
-With Search V4.8 complete, resuming this foundation on
-`feature/local-meme-explainer` is the next development priority.
+On `feature/local-meme-explainer`, the next priority is restoring full template
+reference coverage and manually verifying recognition in the real app.
 The full chatbot is a separate later design discussion. Local OCR, upload
 normalization, template identification, metadata and related meme retrieval remain
 available. Existing template search, accounts, libraries and the creator/editor
@@ -143,7 +143,9 @@ On Home, expand **Analyze a Meme**:
    1600 pixels per side; animated and corrupt images are rejected.
 3. Click **Read text locally** to run OCR and local template identification.
    OCR downloads its small models on first use, then reuses the local cache.
-4. Optionally correct the visible text and review **Template context**.
+4. Optionally correct the visible text and review **Template context**. Raw OCR
+   remains available; effective captions exclude numeric-only lines while preserving
+   numbers inside meaningful text. Corrections take precedence.
 5. Click **Explain meme** for a local explanation. Optionally ask about meaning,
    why it works, when to use it, the caption, or similar memes. This uses the
    analysis already available; run **Read text locally** first or supply a caption.
@@ -420,6 +422,6 @@ local automated tests separately cover application behavior with mocked services
 - Video/GIF support.
 - Future GIF and sticker discovery and creation features.
 
-These are later roadmap tracks after Search V4.8 and the return to the Local Meme
-Explainer foundation. The sidebar Explore and Categories navigation entries
+These are later roadmap tracks after the current Local Meme Explainer foundation
+work. The sidebar Explore and Categories navigation entries
 are disabled placeholders; the category filters described above are available.
