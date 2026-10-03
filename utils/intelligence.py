@@ -17,7 +17,7 @@ def reliable_template(result, memes):
 def explain_upload(upload, local_result, memes, corrected_text=None, provider=None):
     """Use an explicitly supplied provider; no default explainer is installed."""
     if provider is None:
-        return VisionResult("unavailable", message="Image explanation unavailable. A local Meme Explainer is planned separately.")
+        return VisionResult("unavailable", message="Image explanation unavailable: no provider supplied.")
     matched = reliable_template(local_result, memes)
     hint = explain(matched) if matched else None
     original = local_result["ocr"].text

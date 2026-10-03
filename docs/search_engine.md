@@ -2,7 +2,7 @@
 
 ## Search Engine V4 current architecture
 
-Last updated: 2 October 2026
+Last updated: 3 October 2026
 
 Search Engine V4 extends the existing template-search system so Meme Finder can
 search two distinct content types:
@@ -12,8 +12,8 @@ search two distinct content types:
 
 The two datasets and ranking systems remain separate.
 
-V4.1–V4.8 are complete; Search V4 is complete. The next priority is returning to
-the Local Meme Explainer foundation. See [Project Status](PROJECT_STATUS.md) and the [Roadmap](ROADMAP.md)
+V4.1–V4.8 are complete; Search V4 is complete. The current priority is Local Meme Explainer V2.2
+reference coverage recovery. See [Project Status](PROJECT_STATUS.md) and the [Roadmap](ROADMAP.md)
 for the current checkpoint and agreed development order.
 
 ```text
@@ -300,9 +300,20 @@ split as 1 page/2 images per approved source. No crawler expansion was used here
 The completed V4.8 milestone provides a reproducible offline benchmark covering exact names,
 aliases, descriptions, situations, finished-meme captions, typos, Hinglish-lite,
 ambiguous queries, and correct abstention for irrelevant/nonsense queries.
-Next, work returns to the paused Local Meme Explainer foundation; the full
-chatbot remains a separate later design discussion. Follow the agreed
+Finished-meme supporting-evidence integration is in place in the Local Meme
+Explainer. The full chatbot remains a separate later design discussion. Follow the agreed
 [Roadmap](ROADMAP.md). Permanent catalog entry still requires human approval.
+
+## Local Meme Explainer retrieval checkpoint — 3 October 2026
+
+The explainer and finished-meme retrieval use the effective OCR caption, with
+user corrections taking precedence. Numeric-only OCR lines are excluded from
+that caption; numbers within meaningful text are preserved. Complete raw OCR
+remains available for display/debugging. Finished-meme matches remain supporting
+evidence. See [explainer documentation](explainer.md) for V1.1 and partial V2.1.
+
+The unchanged Search V4.8 benchmark was rerun: 34/34 passed, Top-1 100%,
+Top-3 recall 100%, abstention 100%, and Noise@3 0%.
 
 ## Offline evaluation (V4.8)
 
@@ -311,7 +322,7 @@ completed Search V4 checkpoint (2 October 2026). The persistent application inde
 `data/meme_instances.json` contains 19 reviewed finished-meme records.
 The unchanged benchmark passes 34/34: Top-1 accuracy 100% (26/26), mean Top-3
 recall 100%, abstention 100% (8/8), and Noise@3 0% (0/28 returned slots).
-Final full pytest result: 555 passed, 1,396 subtests passed. All four original baseline
+The 2 October Search checkpoint full pytest result was 555 passed, 1,396 subtests passed. All four original baseline
 failures are resolved; the original 30/34 measurements remain recorded in
 [Project Status](PROJECT_STATUS.md) for comparison.
 

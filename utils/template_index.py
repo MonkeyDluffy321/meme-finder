@@ -55,7 +55,7 @@ def read_index(memes, cache=CACHE):
     try:
         data = json.loads((cache / "index.json").read_text(encoding="utf-8"))
         if data["fingerprint"] != fingerprint(memes):
-            return []
+            return read_cached_references(memes, cache)
         ids = {m["id"] for m in memes}
         rows = data["rows"]
         if not isinstance(rows, list) or len({r["id"] for r in rows}) != len(rows):
@@ -70,6 +70,30 @@ def read_index(memes, cache=CACHE):
         return rows
     except (OSError, ValueError, KeyError, TypeError):
         return []
+
+
+def read_cached_references(memes, cache=CACHE):
+    """Reuse validated URL-keyed images when collection-wide metadata is stale.
+
+    Recompute hashes instead of trusting old ID associations or embeddings.
+    Missing/invalid references stay missing; no downloads or writes occur.
+    """
+    rows = []
+    seen = set()
+    for meme in memes:
+        if meme["id"] in seen:
+            continue
+        seen.add(meme["id"])
+        path = cache / (sha256(meme["image_url"].encode()).hexdigest() + ".png")
+        try:
+            if path.stat().st_size > MAX_BYTES:
+                continue
+            upload = validate_upload(path.read_bytes())
+            if informative(upload.image):
+                rows.append({"id": meme["id"], "hash": image_hash(upload.image)})
+        except (OSError, ValueError):
+            continue
+    return rows
 
 
 def prepare_index(memes, *, use_embeddings=True, cache=CACHE):

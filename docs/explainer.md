@@ -1,6 +1,6 @@
 # Meme Finder — Local Meme Explainer
 
-Last updated: 2 October 2026
+Last updated: 3 October 2026
 
 This document describes the current local Meme Explainer foundation.
 
@@ -25,13 +25,13 @@ Uploaded meme
 ↓
 image validation
 ↓
-local OCR
+local OCR (complete raw text retained)
 ↓
-user-corrected visible text if supplied
+effective caption selection / user-corrected visible text if supplied
 ↓
 optional template identification
 ↓
-local template/search metadata
+local template metadata + finished-meme supporting evidence
 ↓
 deterministic explanation engine
 
@@ -40,7 +40,7 @@ deterministic explanation engine
 The explainer should prefer evidence in this order:
 
 1. User-corrected visible text
-2. OCR-visible text
+2. Effective OCR caption
 3. Reliable template identification
 4. Local template metadata
 5. Local search/related-meme evidence
@@ -58,6 +58,7 @@ The foundation currently supports:
 - optional template context;
 - deterministic explanation rules;
 - basic question intents;
+- finished-meme retrieval as supporting evidence;
 - local related-meme/template suggestions;
 - abstention or limited explanations when evidence is insufficient;
 - no external AI explanation API.
@@ -106,46 +107,58 @@ This confirms:
 - correction precedence works;
 - the current explanation depth is limited by available evidence.
 
-## Search V4 integration plan
+## Search V4 supporting-evidence integration
 
-Search V4.8 is complete on `main`; the explainer foundation is next to gain stronger
-retrieval context.
+Finished-meme supporting-evidence integration is already in place. Retrieval uses
+the effective caption or user correction, alongside optional reliable template
+metadata, to support the deterministic local explanation. Retrieved matches are
+supporting evidence, not proof of identity or general visual understanding.
 
-Planned flow:
+## Validated checkpoint — 3 October 2026
 
-Uploaded meme
-↓
-OCR / corrected visible text
-↓
-Search V4 finished-meme retrieval
-+
-template search / metadata
-+
-similar real meme examples
-↓
-structured explanation context
-↓
-local deterministic explanation engine
+### V1.1 — OCR caption selection
 
-The goal is not to "train a chatbot" at this stage.
+A conservative effective-caption layer excludes numeric-only OCR lines while
+preserving numbers inside meaningful text. Complete raw OCR remains available
+for display/debugging, and user corrections still take precedence. The effective
+caption is used by the local explainer and finished-meme retrieval.
 
-The goal is to provide better evidence to the existing local explainer.
+Real manual example:
 
-## Real-meme grounding
+```text
+Raw OCR:
+38
+ME PLANTING SEEDS OF DOUBT
+50
 
-Future explainer improvement should use real finished memes as retrieval evidence.
+Effective caption:
+ME PLANTING SEEDS OF DOUBT
+```
 
-For example:
+### V2.1 — template-reference recovery (partial)
 
-current meme
-↓
-retrieve similar indexed finished memes
-↓
-inspect captions, situations, topics, template metadata and provenance
-↓
-use those records as explanation context
+Home previously showed 0/41 references because the cached index fingerprint
+matched the previous 40 curated templates, while Home supplied 41
+curated+imported templates. The mismatch rejected the whole index.
 
-This is retrieval-grounded explanation, not large-model training.
+A local fallback now reuses validated URL-keyed cached images and recomputes
+hashes when the fingerprint is stale. It adds no downloads or cache writes and
+does not reuse stale IDs or embeddings. Existing reliability rules and
+thresholds remain unchanged.
+
+Home now has 38/41 usable references. A cached Distracted Boyfriend reference
+returns `likely` through `identify()` and resolves through `reliable_template()`
+when checked directly. Home still downgrades matches because coverage is
+incomplete; V2 is not complete.
+
+Missing references:
+
+- Success Kid
+- First World Problems
+- Wasting Potential
+
+Next priority: **V2.2** — restore these three references, reach full reference
+coverage, and manually verify known-template recognition in the real app.
 
 ## Chatbot boundary
 
@@ -163,19 +176,16 @@ until the chatbot design has been explicitly discussed and documented.
 
 ## Branch checkpoint
 
-Current explainer development branch:
+Current working tree: `feature/local-meme-explainer`.
 
-`feature/local-meme-explainer`
+- Full regression: `.\.venv\Scripts\python.exe -B -m pytest -p no:cacheprovider -q`
+  — 588 tests passed, 1,429 subtests passed.
+- Search V4.8: `.\.venv\Scripts\python.exe -B -m utils.search_eval --fail-on-failure`
+  — 34/34 passed; Top-1 100%, Top-3 recall 100%, abstention 100%, Noise@3 0%.
+- `git diff --check`: clean.
 
-The paused checkpoint includes the then-current Search V4 main merged into the branch.
-
-Verified regression result:
-
-- 546 tests passed
-- 1366 subtests passed
-
-The branch was pushed to GitHub and paused for Search V4.8. Search V4.8 is now
-complete on `main`; resuming this foundation is the next development priority.
+These results validate the current working tree; they do not establish full
+reference coverage or completion of V2.
 
 ## Related files
 
@@ -194,12 +204,7 @@ Tests for the explainer and intelligence pipeline live under `tests/`.
 
 ## Next explainer milestone
 
-Resume the foundation using the completed Search V4 checkpoint:
-
-1. connect the explainer to finished-meme retrieval;
-2. combine real meme evidence with template metadata;
-3. improve deterministic explanation quality;
-4. create explainer-specific evaluation cases;
-5. measure when it explains correctly versus when it should abstain.
-
-Only after that should the separate chatbot design discussion begin.
+1. V2.2: restore Success Kid, First World Problems and Wasting Potential references.
+2. Reach full reference coverage and manually verify known-template recognition in the real app.
+3. Continue explainer-specific quality and abstention evaluation before expansion.
+4. Keep full chatbot design as a separate later discussion.

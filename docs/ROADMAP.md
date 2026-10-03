@@ -1,6 +1,6 @@
 # Meme Finder — Development Roadmap
 
-Last updated: 2 October 2026
+Last updated: 3 October 2026
 
 This document defines the agreed development order for Meme Finder.
 
@@ -28,70 +28,70 @@ Completed:
 
 ## Priority 2 — Local Meme Explainer foundation
 
-Status: PARTLY COMPLETE / NEXT PRIORITY TO RESUME
+Status: IN PROGRESS — V1.1 VALIDATED / V2.1 PARTIAL
 
-Branch:
+Branch: `feature/local-meme-explainer`
 
-`feature/local-meme-explainer`
+Goal: build a reliable local explanation foundation. The full chatbot remains
+a separate later product-design discussion.
 
-Goal:
-Build a reliable local explanation foundation.
+Completed work includes the deterministic local engine, corrected-caption-first
+evidence, OCR fallback, optional template context, basic question intents,
+related suggestions, and finished-meme supporting-evidence integration.
+No external explanation API is required. Explanation depth remains limited
+when caption and reliable template evidence are insufficient.
 
-This is NOT the final chatbot.
+### V1.1 — OCR caption selection
 
-The foundation should use:
+A conservative effective-caption layer excludes numeric-only OCR lines while
+preserving numbers inside meaningful text. Complete raw OCR remains available
+for display/debugging, and user corrections still take precedence. The effective
+caption is used by the local explainer and finished-meme retrieval.
 
-uploaded meme
-↓
-OCR / corrected visible text
-↓
-reliable template context when available
-↓
-local metadata / search evidence
-↓
-deterministic explanation
-↓
-abstain when evidence is insufficient
+Real manual example:
 
-Current completed work:
-- Local explanation engine.
-- Corrected-caption-first evidence.
-- OCR fallback.
-- Optional template context.
-- Basic question intents.
-- Related meme/template suggestions.
-- No external explanation API required.
-- Then-current Search V4 main merged into branch at its paused checkpoint.
-- Integration regression suite:
-  - 546 tests passed
-  - 1366 subtests passed
+```text
+Raw OCR:
+38
+ME PLANTING SEEDS OF DOUBT
+50
 
-Known limitation:
-The current explainer is safe and conservative but often too shallow for arbitrary
-finished memes because it lacks enough retrieved real-meme evidence.
+Effective caption:
+ME PLANTING SEEDS OF DOUBT
+```
 
-Example:
-A taco-vs-pizza Two Buttons meme had readable text, but the explainer mostly
-repeated the caption instead of reliably explaining the visual/template joke.
+### V2.1 — template-reference recovery (partial)
 
-Next work on Priority 2:
-Resume the paused foundation now that Search V4.8 is complete.
+Home previously showed 0/41 references because the cached index fingerprint
+matched the previous 40 curated templates, while Home supplied 41
+curated+imported templates. The mismatch rejected the whole index.
 
-Then connect the explainer to stronger Search V4 evidence:
+A local fallback now reuses validated URL-keyed cached images and recomputes
+hashes when the fingerprint is stale. It adds no downloads or cache writes and
+does not reuse stale IDs or embeddings. Existing reliability rules and
+thresholds remain unchanged.
 
-OCR / corrected caption
-↓
-finished-meme retrieval
-+
-template metadata
-+
-similar real meme examples
-↓
-local explanation engine
+Home now has 38/41 usable references. A cached Distracted Boyfriend reference
+returns `likely` through `identify()` and resolves through `reliable_template()`
+when checked directly. Home still downgrades matches because coverage is
+incomplete; V2 is not complete.
 
-Do not automatically turn this into a general-purpose chatbot.
+Missing references:
 
-The full chatbot/explainer product is a separate later design discussion.
+- Success Kid
+- First World Problems
+- Wasting Potential
+
+Next priority: **V2.2** — restore these three references, reach full reference
+coverage, and manually verify known-template recognition in the real app.
+
+### Validated checkpoint — 3 October 2026
+
+- Full regression: `.\.venv\Scripts\python.exe -B -m pytest -p no:cacheprovider -q`
+  — 588 tests passed, 1,429 subtests passed.
+- Search V4.8: `.\.venv\Scripts\python.exe -B -m utils.search_eval --fail-on-failure`
+  — 34/34 passed; Top-1 100%, Top-3 recall 100%, abstention 100%, Noise@3 0%.
+- `git diff --check`: clean.
 
 ---
 
@@ -239,7 +239,7 @@ Post-merge checkpoint (2 October 2026, PR #27 merged to main): the frozen offlin
 Noise@3 0%. The final full pytest suite passed: 555 tests, 1,396 subtests.
 Search V4 is complete. These measurements cover the curated lexical/finished
 fixture profile; broader hybrid-search quality remains outside this benchmark.
-The next priority is returning to the Local Meme Explainer foundation.
+The current priority is Local Meme Explainer V2.2 reference coverage recovery.
 
 ---
 
@@ -343,7 +343,7 @@ Before implementation, define:
 ## Agreed development order
 
 1. Remove Gemini dependency — COMPLETE
-2. Build Local Meme Explainer foundation — PARTLY COMPLETE / PAUSED
+2. Build Local Meme Explainer foundation — IN PROGRESS
 3. Finish Search Engine V4 — COMPLETE
    - V4.1 COMPLETE
    - V4.2 COMPLETE
@@ -353,7 +353,7 @@ Before implementation, define:
    - V4.6 COMPLETE
    - V4.7 COMPLETE
    - V4.8 COMPLETE
-4. Return to Local Meme Explainer foundation — NEXT
+4. Local Meme Explainer V2.2: full reference coverage and real-app recognition verification — NEXT
 5. Finalize documentation / handoff
 6. Creator 2.0
 7. GIF + Sticker Finder

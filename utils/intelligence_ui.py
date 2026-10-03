@@ -9,8 +9,9 @@ from utils.intelligence import analyze, reliable_template
 from utils.explanations import explain, related_memes
 from utils.identification import Identification
 from utils.ocr import OCRResult
+from utils.local_explainer import explain_local
 
-CONTENT_KEYS = ("v3_validated", "v3_result", "v3_text", "v3_related", "v3_explanation")
+CONTENT_KEYS = ("v3_validated", "v3_result", "v3_text", "v3_text_corrected", "v3_related", "v3_explanation", "v3_question")
 
 
 def clear_image():
@@ -27,6 +28,11 @@ def discard_related():
     st.session_state.pop("v3_explanation", None)
 
 
+def caption_changed():
+    st.session_state.v3_text_corrected = True
+    discard_related()
+
+
 def render_metadata(matched):
     metadata = explain(matched)
     st.write(metadata["name"])
@@ -38,7 +44,7 @@ def render_metadata(matched):
 
 def render_intelligence(memes):
     with st.expander("Analyze a Meme", expanded=False):
-        st.caption("Read visible text, identify local templates and find related memes. A local Meme Explainer is planned separately.")
+        st.caption("Read visible text, identify local templates and explain memes using local collection metadata.")
         generation = st.session_state.get("v3_generation", 0)
         uploaded = st.file_uploader("Meme image", type=["jpg", "jpeg", "png", "webp"],
                                     key=f"v3_upload_{generation}")
@@ -68,9 +74,13 @@ def render_intelligence(memes):
                 result = analyze(upload, memes)
             st.session_state.v3_result = result
             st.session_state.v3_text = result["ocr"].text
+            st.session_state.v3_text_corrected = False
             discard_related()
         result = st.session_state.get("v3_result", {
             "ocr": OCRResult("not_run"), "identification": Identification("unavailable"), "notices": []})
+        if result["ocr"].status != "not_run":
+            with st.expander("Raw OCR", expanded=False):
+                st.text(result["ocr"].text)
         st.markdown("**Visible text**")
         messages = {"not_run": "Read text locally above, or type it below.",
                     "empty": "No readable text detected. You can type a caption below.",
@@ -81,7 +91,38 @@ def render_intelligence(memes):
             st.caption(messages[result["ocr"].status])
         st.session_state.setdefault("v3_text", result["ocr"].text)
         st.text_area("Check or correct the visible text (optional)", key="v3_text", max_chars=5000,
-                     on_change=discard_related)
+                     on_change=caption_changed)
+        st.text_input("Local question (optional)", key="v3_question", max_chars=500,
+                      placeholder="What does this meme mean?", on_change=discard_related)
+        if st.button("Explain meme", key="v3_explain"):
+            correction = st.session_state.v3_text
+            if correction == result["ocr"].text and not st.session_state.get("v3_text_corrected", False):
+                correction = None
+            st.session_state.v3_explanation = explain_local(
+                result, memes, corrected_text=correction, question=st.session_state.v3_question)
+        local_explanation = st.session_state.get("v3_explanation")
+        if local_explanation is not None:
+            explanation = local_explanation.explanation
+            st.markdown("### Local explanation")
+            st.text(explanation.answer)
+            if explanation.intent not in ("overview", "meaning"):
+                st.text(explanation.expression)
+            st.text(explanation.observations)
+            if explanation.intent != "humor":
+                st.text(explanation.why_it_works)
+            if explanation.intent != "caption":
+                for wording in explanation.wording:
+                    st.text(wording)
+            if explanation.intent != "usage" and explanation.situations:
+                st.text("Documented situations:\n" + "\n".join(explanation.situations))
+            if explanation.intent != "similar" and explanation.related:
+                st.text("Related collection suggestions (not image identifications):\n" +
+                        "\n".join(meme["name"] for meme in explanation.related))
+            st.caption(explanation.uncertainty)
+            if explanation.intent != "similar" and explanation.supporting_context:
+                st.text(explanation.supporting_context)
+            if explanation.template_name:
+                st.text("Template: " + explanation.template_name + " (supporting context)")
         matched = reliable_template(result, memes)
         with st.expander("Template context", expanded=False):
             identity = result["identification"]
