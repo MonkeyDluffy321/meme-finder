@@ -1,6 +1,30 @@
 # Meme Finder — Development Roadmap
 
-Last updated: 3 October 2026
+Last updated: 25 November 2026
+
+## Current V2.2 checkpoint and next work
+
+The historical V2.1 and October milestones below are preserved. Their 38/41
+coverage, former branch and V2.2 NEXT labels are superseded by this checkpoint.
+Current branch: `feature/explainer-v2-2`.
+
+V2.2 reference indexing, validated downloads, exact/reliable identification,
+OCR caption filtering with raw transcript preservation, and stale-session refresh
+with manual correction preservation are implemented. Reported local verification
+reached 41/41 references, 602 tests and 1,435 subtests passed. Search V4 retained
+34/34, Top-1 and Top-3 100%, abstention 100%, Noise@3 0%.
+
+Manual testing explained Wasting My Potential correctly but did not explain an
+NPC meme despite successful OCR. General-purpose meme reasoning remains unresolved.
+
+Next work is the planned hybrid architecture: preserve offline OCR, identification
+and search; evaluate lightweight local AI through Ollama; add optional cloud
+multimodal providers only with explicit user consent. Use a provider-independent
+interface and graceful fallback, with no mandatory cloud dependency. Evaluate
+quality and resource use on 8 GB RAM, Intel i5-11300H and Iris Xe graphics before
+selecting a model. Disk D relocation is planned, not completed. Provider integration
+and hardware suitability are not yet verified. Full chatbot/memory design remains
+a separate scope. See [the architecture plan](explainer.md#planned-hybrid-architecture).
 
 This document defines the agreed development order for Meme Finder.
 
@@ -71,7 +95,7 @@ hashes when the fingerprint is stale. It adds no downloads or cache writes and
 does not reuse stale IDs or embeddings. Existing reliability rules and
 thresholds remain unchanged.
 
-Home now has 38/41 usable references. A cached Distracted Boyfriend reference
+At the V2.1 checkpoint, Home had 38/41 usable references. A cached Distracted Boyfriend reference
 returns `likely` through `identify()` and resolves through `reliable_template()`
 when checked directly. Home still downgrades matches because coverage is
 incomplete; V2 is not complete.

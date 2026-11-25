@@ -9,6 +9,7 @@ from utils.intelligence import analyze, reliable_template
 from utils.explanations import explain, related_memes
 from utils.identification import Identification
 from utils.ocr import OCRResult
+from utils.template_index import CACHE, fingerprint
 from utils.local_explainer import explain_local
 
 CONTENT_KEYS = ("v3_validated", "v3_result", "v3_text", "v3_text_corrected", "v3_related", "v3_explanation", "v3_question")
@@ -69,12 +70,18 @@ def render_intelligence(memes):
             return
         st.image(BytesIO(upload.preview), width=500)
         st.caption("Preview and OCR run locally on this app's server.")
-        if st.button("Read text locally", key="v3_analyze"):
+        index_path = CACHE / "index.json"
+        revision = (2, fingerprint(memes), index_path.stat().st_mtime_ns if index_path.exists() else None)
+        stale = "v3_result" in st.session_state and st.session_state.get("v3_revision") != revision
+        requested = st.button("Read text locally", key="v3_analyze")
+        if requested or stale:
             with st.spinner("Reading visible text locally…"):
                 result = analyze(upload, memes)
             st.session_state.v3_result = result
-            st.session_state.v3_text = result["ocr"].text
-            st.session_state.v3_text_corrected = False
+            st.session_state.v3_revision = revision
+            if requested or not st.session_state.get("v3_text_corrected", False):
+                st.session_state.v3_text = result["ocr"].editable_text
+                st.session_state.v3_text_corrected = False
             discard_related()
         result = st.session_state.get("v3_result", {
             "ocr": OCRResult("not_run"), "identification": Identification("unavailable"), "notices": []})
@@ -96,7 +103,7 @@ def render_intelligence(memes):
                       placeholder="What does this meme mean?", on_change=discard_related)
         if st.button("Explain meme", key="v3_explain"):
             correction = st.session_state.v3_text
-            if correction == result["ocr"].text and not st.session_state.get("v3_text_corrected", False):
+            if correction == result["ocr"].editable_text and not st.session_state.get("v3_text_corrected", False):
                 correction = None
             st.session_state.v3_explanation = explain_local(
                 result, memes, corrected_text=correction, question=st.session_state.v3_question)
@@ -105,14 +112,8 @@ def render_intelligence(memes):
             explanation = local_explanation.explanation
             st.markdown("### Local explanation")
             st.text(explanation.answer)
-            if explanation.intent not in ("overview", "meaning"):
-                st.text(explanation.expression)
-            st.text(explanation.observations)
-            if explanation.intent != "humor":
+            if explanation.intent in ("overview", "meaning"):
                 st.text(explanation.why_it_works)
-            if explanation.intent != "caption":
-                for wording in explanation.wording:
-                    st.text(wording)
             if explanation.intent != "usage" and explanation.situations:
                 st.text("Documented situations:\n" + "\n".join(explanation.situations))
             if explanation.intent != "similar" and explanation.related:
@@ -128,6 +129,7 @@ def render_intelligence(memes):
             identity = result["identification"]
             st.caption("Local collection metadata; the exact uploaded joke is not interpreted.")
             if matched:
+                st.caption("Exact reference image" if identity.mode == "exact pixels" else "Reliable template match")
                 render_metadata(matched)
             elif identity.status == "possible" and identity.candidates:
                 names = {m["id"]: m["name"] for m in memes}

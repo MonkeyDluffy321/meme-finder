@@ -304,6 +304,21 @@ Finished-meme supporting-evidence integration is in place in the Local Meme
 Explainer. The full chatbot remains a separate later design discussion. Follow the agreed
 [Roadmap](ROADMAP.md). Permanent catalog entry still requires human approval.
 
+## V2.2 explainer handoff — 25 November 2026
+
+The reported V2.2 checkpoint is 602 regression tests and 1,435 subtests passed.
+The frozen Search V4 profile retained 34/34, Top-1 and Top-3 100%, abstention
+100%, Noise@3 0%. These are prior session results, not a fresh documentation-run
+benchmark. The offline curated/finished-fixture scope below still applies.
+
+The explainer uses layout-selected OCR captions or explicit user corrections for
+local retrieval while preserving raw OCR. Identification has reported 41/41 local
+reference coverage, including imported images. Search matches remain supporting
+evidence. See [the V2.2 checkpoint](explainer.md#v22-checkpoint) for identification,
+session refresh and manual limitations, including the NPC explanation failure.
+Ollama and consent-gated cloud multimodal providers are planned explanation work.
+This checkpoint records no new Search V4 ranking behavior.
+
 ## Local Meme Explainer retrieval checkpoint — 3 October 2026
 
 The explainer and finished-meme retrieval use the effective OCR caption, with

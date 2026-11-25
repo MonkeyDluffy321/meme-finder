@@ -39,6 +39,7 @@ def identify(image, rows, vector=None):
     ranked.sort(key=lambda r: r["score"], reverse=True)
     best = ranked[0]
     margin = best["score"] - ranked[1]["score"] if len(ranked) > 1 else 0
+    best["margin"] = margin
     if visual_mode:
         likely = best["visual"] >= 0.88 and best["hash"] >= 0.72 and margin >= 0.06
         possible = best["visual"] >= 0.78 and best["hash"] >= 0.60

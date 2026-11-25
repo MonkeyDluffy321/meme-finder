@@ -76,6 +76,10 @@ def question_intent(question):
 def caption_reading(text):
     """Conservative text patterns; quoted clauses remain claims by the caption."""
     text = text.strip()
+    if (re.search(r"\b(?:my|our) favou?rite hobby\b", text, re.I)
+            and re.search(r"\b(?:wasting|failing|procrastinating|ruining)\b", text, re.I)):
+        return ("The speaker pokes fun at their own unproductive habit.",
+                "Calling an undesirable habit a favorite hobby turns self-criticism into an ironic boast.")
     clause = r"(.+?)"
     for pattern, label in (
         (r"expectation\s*:\s*" + clause + r"\s+reality\s*:\s*(.+)", "expectation"),
@@ -113,10 +117,11 @@ def explain_local(local_result, memes, corrected_text=None, question=""):
     matched = reliable_template(local_result, memes)
     metadata = explain(matched) if matched else {}
     raw_ocr_text = local_result["ocr"].text
-    text = corrected_text if corrected_text is not None else select_caption(raw_ocr_text)
+    ocr = local_result["ocr"]
+    text = corrected_text if corrected_text is not None else select_caption(ocr.editable_text)
     source = "User-corrected visible text" if corrected_text is not None else "Raw OCR (may contain errors)"
     if corrected_text is None and text != raw_ocr_text:
-        source = "Selected OCR caption (numeric-only lines excluded; may contain errors)"
+        source = "Selected OCR caption (numeric-only lines excluded; may contain errors)" if ocr.caption is None else "Selected OCR caption (may contain errors)"
     related = related_memes(memes, matched, text)
     finished_evidence = finished_examples(text)
     supporting_context = format_finished_examples(finished_evidence)
@@ -138,12 +143,12 @@ def explain_local(local_result, memes, corrected_text=None, question=""):
         why = "There is insufficient evidence to explain the uploaded joke."
     if reliable_context:
         if usable_caption:
-            expression += (f' Applied to "{text}", the likely template convention suggests this reaction: '
-                           + meaning + " This connection is tentative if the caption contradicts that convention.")
-            why += (f' For this caption, "{text}", the template supplies the conventional reaction "{meaning}". '
-                    "The possible joke is the pairing of that reaction with the caption's situation, rather than the template by itself.")
+            expression += " " + meaning
+            if question_intent(question) == "humor":
+                why += " " + expression
         else:
-            expression += " The reliable template supplies limited context: " + meaning
+            expression = meaning
+            why = description
         observations += " Supporting collection description: " + description
     uncertainty = ("Visual/template context is uncertain. " if not matched else
                    "Template identification is supporting context, not proof of the uploaded joke. ")

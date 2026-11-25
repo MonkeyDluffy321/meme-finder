@@ -1,5 +1,22 @@
 # Meme Finder
 
+## Current V2.2 checkpoint — 25 November 2026
+
+The current branch is `feature/explainer-v2-2`. Reported local verification reached
+41/41 references, with 602 regression tests and 1,435 subtests passed. Search V4
+retained 34/34, Top-1 and Top-3 100%, abstention 100%, Noise@3 0%, within its
+documented offline benchmark profile. These are prior session results, not fresh
+runs for this documentation update.
+
+V2.2 implements imported-image indexing, validated reference downloads, exact and
+reliable identification, layout-aware OCR caption filtering with raw transcript
+preservation, and stale-session analysis refresh with manual correction preservation.
+Manual testing explained Wasting My Potential correctly, but an NPC meme remained
+unexplained despite successful OCR. The explainer is not a general-purpose meme
+reasoning engine. This checkpoint supersedes the older reference-recovery priorities
+below. See [the explainer checkpoint](docs/explainer.md#v22-checkpoint) for details
+and the planned hybrid architecture.
+
 ## Search Engine V4 (V4.1–V4.8 complete)
 
 V4.8 completes the search-quality milestone with a reproducible offline
