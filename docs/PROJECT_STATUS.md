@@ -1,11 +1,39 @@
 # Meme Finder — Project Status
 
-Last updated: 3 October 2026
+Last updated: 25 November 2026
+
+## Current V2.2 checkpoint
+
+Current branch: `feature/explainer-v2-2`. The sections dated 3 October below are
+historical milestones, including the former branch, 38/41 coverage and next-task
+list. This checkpoint supersedes those current-state claims.
+
+Implemented features include combined curated/imported reference indexing,
+validated reference downloads, exact/reliable identification, layout-aware OCR
+caption filtering with complete raw transcript preservation, and Streamlit
+stale-session analysis refresh. Automatic refresh preserves manual corrections;
+corrections take precedence in explanation and related search.
+
+Reported local verification achieved 41/41 reference coverage, 602 tests and
+1,435 subtests passed. Search V4 retained 34/34, Top-1 and Top-3 100%, abstention
+100%, Noise@3 0%. These are prior session results, not rerun for this update.
+
+Manual testing explained Wasting My Potential correctly. An NPC meme was not
+explained despite successful OCR. General-purpose meme reasoning remains unresolved.
+
+The next task is hybrid explanation design and quality/resource evaluation,
+including the NPC failure. Retain offline OCR, identification and search, then
+evaluate lightweight local AI through Ollama and optional cloud multimodal APIs
+with explicit user consent. Use a provider-independent interface and graceful
+fallback with no mandatory cloud dependency. These integrations are planned.
+Target hardware is 8 GB RAM, Intel i5-11300H and Iris Xe graphics; model suitability
+is unverified. Relocation to Disk D is planned and has not been completed.
+See [the explainer architecture](explainer.md#planned-hybrid-architecture).
 
 This file is the source of truth for the current development checkpoint.
 Read this file before continuing Meme Finder development.
 
-## Current branch
+## Historical branch — 3 October 2026
 
 `feature/local-meme-explainer`
 
@@ -13,7 +41,7 @@ Search V4.8 is complete and was merged into `main` via PR #27. This checkpoint
 records the validated Local Meme Explainer working tree; it does not record a
 new commit, push or merge.
 
-## Current priority
+## Historical priority — 3 October 2026
 
 Priority 2 — Local Meme Explainer foundation.
 
@@ -75,7 +103,7 @@ hashes when the fingerprint is stale. It adds no downloads or cache writes and
 does not reuse stale IDs or embeddings. Existing reliability rules and
 thresholds remain unchanged.
 
-Home now has 38/41 usable references. A cached Distracted Boyfriend reference
+At the V2.1 checkpoint, Home had 38/41 usable references. A cached Distracted Boyfriend reference
 returns `likely` through `identify()` and resolves through `reliable_template()`
 when checked directly. Home still downgrades matches because coverage is
 incomplete; V2 is not complete.
@@ -228,7 +256,7 @@ Documentation must be updated after every meaningful development checkpoint.
 
 README should not be used as a development diary.
 
-## Latest verified test checkpoint
+## Historical verified test checkpoint — 3 October 2026
 
 Local Meme Explainer working tree — 3 October 2026:
 
@@ -238,7 +266,7 @@ Local Meme Explainer working tree — 3 October 2026:
   — 34/34 passed; Top-1 100%, Top-3 recall 100%, abstention 100%, Noise@3 0%.
 - `git diff --check`: clean.
 
-## Exact next task
+## Historical next task — superseded by V2.2 checkpoint
 
 1. V2.2: restore Success Kid, First World Problems and Wasting Potential references.
 2. Reach full reference coverage and manually verify known-template recognition in the real app.

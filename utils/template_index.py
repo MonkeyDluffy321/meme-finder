@@ -6,13 +6,14 @@ import json
 import math
 from pathlib import Path
 from threading import RLock
-from urllib.request import Request, urlopen
+from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 from PIL import Image, ImageStat
 
 from utils.uploads import MAX_BYTES, validate_upload
 
 CACHE = Path(__file__).resolve().parents[1] / ".cache" / "v3"
+LOCAL_IMAGES = Path(__file__).resolve().parents[1] / "data" / "imported_images"
 MODEL = "Qdrant/clip-ViT-B-32-vision"
 VERSION = 1
 _LOCK = RLock()
@@ -30,7 +31,7 @@ def informative(image):
 
 
 def fingerprint(memes):
-    payload = [(m["id"], m["image_url"]) for m in memes]
+    payload = [(m["id"], m.get("image_url", ""), m.get("local_image", "")) for m in memes]
     return sha256(json.dumps([VERSION, MODEL, payload]).encode()).hexdigest()
 
 
@@ -67,9 +68,31 @@ def read_index(memes, cache=CACHE):
             if vector is not None and (len(vector) != 512 or
                     not all(isinstance(x, (int, float)) and math.isfinite(x) for x in vector)):
                 return []
+        indexed = {row["id"] for row in rows}
+        rows.extend(read_cached_references([m for m in memes if m["id"] not in indexed], cache))
         return rows
+    except FileNotFoundError:
+        return read_cached_references(memes, cache)
     except (OSError, ValueError, KeyError, TypeError):
         return []
+
+
+def reference_path(meme, cache=CACHE):
+    if meme.get("local_image"):
+        return _local_image_path(meme["local_image"])
+    url = meme.get("image_url")
+    return cache / (sha256(url.encode()).hexdigest() + ".png") if url else None
+
+
+def matches_reference_pixels(image, meme):
+    path = reference_path(meme)
+    try:
+        if path is None or path.stat().st_size > MAX_BYTES:
+            return False
+        reference = validate_upload(path.read_bytes()).image
+        return image.size == reference.size and image.convert("RGB").tobytes() == reference.tobytes()
+    except (OSError, ValueError):
+        return False
 
 
 def read_cached_references(memes, cache=CACHE):
@@ -84,7 +107,9 @@ def read_cached_references(memes, cache=CACHE):
         if meme["id"] in seen:
             continue
         seen.add(meme["id"])
-        path = cache / (sha256(meme["image_url"].encode()).hexdigest() + ".png")
+        path = reference_path(meme, cache)
+        if path is None:
+            continue
         try:
             if path.stat().st_size > MAX_BYTES:
                 continue
@@ -96,23 +121,72 @@ def read_cached_references(memes, cache=CACHE):
     return rows
 
 
+def _local_image_path(filename):
+    """Resolve a basename strictly inside the imported image directory."""
+    if not isinstance(filename, str) or not filename or Path(filename).name != filename or "/" in filename or "\\" in filename:
+        return None
+    path = LOCAL_IMAGES / filename
+    try:
+        if path.resolve().parent != LOCAL_IMAGES.resolve():
+            return None
+    except OSError:
+        return None
+    return path
+
+
+def _allowed_reference_url(url):
+    from urllib.parse import urlsplit
+    try:
+        parsed = urlsplit(url)
+        if parsed.scheme != "https" or parsed.query or parsed.fragment or parsed.username or parsed.password:
+            return False
+        if parsed.hostname == "i.imgflip.com":
+            return parsed.port in (None, 443) and parsed.path.startswith("/")
+        return (parsed.hostname == "imgflip.com" and parsed.port in (None, 443) and
+                parsed.path in {"/s/meme/Success-Kid.jpg", "/s/meme/First-World-Problems.jpg"})
+    except (TypeError, ValueError):
+        return False
+
+
+class _ValidatedRedirectHandler(HTTPRedirectHandler):
+    """Follow redirects only while every destination remains an allowed reference."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        if not _allowed_reference_url(newurl):
+            return None
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
 def prepare_index(memes, *, use_embeddings=True, cache=CACHE):
     """Only explicit setup calls download references/models. Retry reuses good files."""
     cache.mkdir(parents=True, exist_ok=True)
     rows, images = [], []
     for meme in memes:
-        url = meme["image_url"]
+        url = meme.get("image_url", "")
+        filename = meme.get("local_image")
         # Filenames derive from URLs rather than untrusted IDs or uploaded names.
-        path = cache / (sha256(url.encode()).hexdigest() + ".png")
+        if filename:
+            path = _local_image_path(filename)
+            if path is None:
+                continue
+        elif url:
+            path = cache / (sha256(url.encode()).hexdigest() + ".png")
+        else:
+            continue
         try:
-            try:
-                upload = validate_upload(path.read_bytes())
-            except (OSError, ValueError):
-                if not url.startswith("https://i.imgflip.com/"):
-                    continue
-                with urlopen(Request(url, headers={"User-Agent": "MemeFinder/3.0"}), timeout=5) as response:
-                    upload = validate_upload(response.read(MAX_BYTES + 1))
-                path.write_bytes(upload.preview)
+            if filename:
+                with path.open("rb") as handle:
+                    upload = validate_upload(handle.read(MAX_BYTES + 1))
+            else:
+                try:
+                    upload = validate_upload(path.read_bytes())
+                except (OSError, ValueError):
+                    if not _allowed_reference_url(url):
+                        continue
+                    opener = build_opener(_ValidatedRedirectHandler())
+                    with opener.open(Request(url, headers={"User-Agent": "MemeFinder/3.0"}), timeout=5) as response:
+                        upload = validate_upload(response.read(MAX_BYTES + 1))
+                    path.write_bytes(upload.preview)
             if informative(upload.image):
                 rows.append({"id": meme["id"], "hash": image_hash(upload.image)})
                 images.append(upload.image)
@@ -136,11 +210,29 @@ def prepare_index(memes, *, use_embeddings=True, cache=CACHE):
     return len(rows), embedded
 
 
-if __name__ == "__main__":
+def load_collection(data_dir=None):
+    """Load curated templates and append imports using the app's ID precedence."""
+    if data_dir is None:
+        data_dir = Path(__file__).resolve().parents[1] / "data"
+    collection = json.loads((data_dir / "memes.json").read_text(encoding="utf-8"))
+    imported_path = data_dir / "imported_memes.json"
+    if imported_path.exists():
+        imported = json.loads(imported_path.read_text(encoding="utf-8"))
+        if isinstance(imported, list):
+            existing_ids = {meme["id"] for meme in collection}
+            collection.extend(meme for meme in imported if meme.get("id") not in existing_ids)
+    return collection
+
+
+def main(argv=None):
     import argparse
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--hash-only", action="store_true")
-    args = parser.parse_args()
-    collection = json.loads((Path(__file__).resolve().parents[1] / "data/memes.json").read_text())
+    args = parser.parse_args(argv)
+    collection = load_collection()
     count, embedded = prepare_index(collection, use_embeddings=not args.hash_only)
     print(f"Prepared {count}/{len(collection)} references; embeddings: {embedded}")
+
+
+if __name__ == "__main__":
+    main()
